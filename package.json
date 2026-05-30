@@ -1,0 +1,26 @@
+{
+	"name": "folder-bases",
+	"version": "1.0.0",
+	"description": "Open a folder's associated Base by clicking it in the file explorer.",
+	"main": "main.js",
+	"scripts": {
+		"dev": "node esbuild.config.mjs",
+		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
+	},
+	"keywords": [
+		"obsidian",
+		"obsidian-plugin",
+		"bases",
+		"folder-notes"
+	],
+	"author": "Scott Tomaszewski",
+	"license": "MIT",
+	"devDependencies": {
+		"@types/node": "^20.11.0",
+		"builtin-modules": "^3.3.0",
+		"esbuild": "^0.20.0",
+		"obsidian": "^1.8.0",
+		"tslib": "^2.6.2",
+		"typescript": "^5.4.0"
+	}
+}

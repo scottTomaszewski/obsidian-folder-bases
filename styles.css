@@ -1,0 +1,13 @@
+/* Folder Bases — optional styling hooks. */
+
+/* Folders known to have a base get a subtle accent on their title.
+   The class is added when a base is opened via the plugin. */
+.nav-folder-title.has-folder-base .nav-folder-title-content {
+	font-style: italic;
+}
+
+/* Settings: default base content editor. */
+.folder-bases-template-input {
+	width: 100%;
+	font-family: var(--font-monospace);
+}

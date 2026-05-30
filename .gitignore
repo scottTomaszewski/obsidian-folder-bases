@@ -1,0 +1,11 @@
+# build artifacts
+main.js
+
+# dependencies
+node_modules/
+
+# devbox
+.devbox/
+
+# misc
+*.log
