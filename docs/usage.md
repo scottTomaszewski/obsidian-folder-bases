@@ -39,6 +39,7 @@ The filename is configurable (see Settings).
 | **Create base on modifier + click** | When a folder has no base, a modifier + click creates one from the default template and opens it. |
 | **Toggle folder when opening** | When a plain click opens a base, also expand/collapse the folder as usual. Off by default (folder stays put). |
 | **Open base in** | Where a base opens: *Current tab* (default), *New tab*, *Split right*, or *Reuse existing tab* (focuses an already-open tab if there is one). Applies to clicks, commands, and the right-click menu. Middle-clicking a folder always opens in a new tab. |
+| **Folder base indicator** | How folders that have a base are marked in the file explorer: *None*, *Italic* (default), *Bold*, *Accent color*, *Dot*, or *Icon*. The mark shows at all times — not just after you click — and respects the folder filter (excluded folders are never marked). |
 | **Default base content** | YAML written into newly created `.base` files. Tokens: `{{folder_name}}`, `{{folder_path}}`. |
 | **Folder filter** | Which folders respond to clicks: *All folders* (default), *Exclude these folders*, or *Only these folders*. |
 | **Folder patterns** | One folder path per line (shown when the filter isn't *All folders*). `*` is a wildcard, e.g. `*/drafts`. Matching is case-sensitive. |
@@ -93,3 +94,7 @@ target the folder you'd expect.
    expands/collapses while modifier + click opens the base.
 5. Change **Base filename template** to `_index.base` and confirm new folders
    resolve to `<folder>/_index.base`.
+6. **Indicator**: confirm `Projects` now shows the folder-base mark (italic by
+   default) without clicking it. Collapse and expand its parent — the mark
+   persists. Try other **Folder base indicator** styles, then delete the base and
+   confirm the mark disappears.

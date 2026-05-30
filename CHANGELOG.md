@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Unreleased changes accumulate under **Unreleased**; cutting a release
 (`devbox run release <version>`) renames that section to the new version header.
 
+## Unreleased
+
+### Added
+- Persistent "has a base" indicator: folders that have a base are now marked in
+  the file explorer at all times (scanned on load, kept in sync with vault
+  create/delete/rename, and re-applied as folders collapse/expand). A **Folder
+  base indicator** setting chooses the style — none, italic (default), bold,
+  accent color, dot, or icon. Only a folder's own base counts, and excluded
+  folders are never marked (#1).
+
 ## 1.2.0
 
 ### Added

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	basePathFor,
 	DEFAULT_BASE_TEMPLATE,
 	DEFAULT_SETTINGS,
 	FolderBasesSettings,
@@ -46,6 +47,38 @@ describe("renderTemplate", () => {
 		expect(yaml).toContain('file.ext == "md"');
 		// No leftover tokens.
 		expect(yaml).not.toContain("{{");
+	});
+});
+
+describe("basePathFor", () => {
+	const DEFAULT = DEFAULT_SETTINGS.baseNameTemplate;
+
+	it("places a same-name base inside the folder (default template)", () => {
+		expect(basePathFor("Projects", "Projects", DEFAULT)).toBe(
+			"Projects/Projects.base",
+		);
+	});
+
+	it("handles nested folders", () => {
+		expect(basePathFor("2024", "Archive/2024", DEFAULT)).toBe(
+			"Archive/2024/2024.base",
+		);
+	});
+
+	it("supports the {{folder_path}} token", () => {
+		expect(basePathFor("Books", "a/Books", "{{folder_path}}.base")).toBe(
+			"a/Books/a/Books.base",
+		);
+	});
+
+	it("does not prepend a slash for a root-level folder", () => {
+		expect(basePathFor("Inbox", "Inbox", DEFAULT)).toBe("Inbox/Inbox.base");
+	});
+
+	it("normalizes the resulting path", () => {
+		expect(basePathFor("Books", "a/Books", "/{{folder_name}}.base")).toBe(
+			"a/Books/Books.base",
+		);
 	});
 });
 

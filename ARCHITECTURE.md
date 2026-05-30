@@ -121,6 +121,35 @@ misconfigured "Only these" can't disable every folder.
 A `file-menu` handler adds **Open folder base** (when a base exists) or **Create
 folder base** (when it doesn't) to the right-click menu on folders.
 
+### Persistent indicator
+
+Folders that have a base are marked in the file explorer at all times. The single
+source of truth is `markedFolders`, a `Set<string>` of folder paths that are both
+*enabled* (`isFolderEnabled`) and have an existing base (`basePathForFolder`).
+
+- `installIndicators()` runs from `workspace.onLayoutReady` (the vault and
+  explorer DOM are ready by then). It does the initial `rebuildMarkedFolders()` +
+  `applyIndicators()`, starts a `MutationObserver`, and registers the listeners.
+- Two triggers, kept separate:
+  - **Vault changed** — `vault.on("create" | "delete" | "rename")` →
+    `refreshIndicators` (debounced) rebuilds the set, then re-marks.
+  - **DOM re-rendered** — a `MutationObserver` on each explorer container
+    (`childList` + `subtree`, *not* `attributes`, so our own class toggles can't
+    feed back in) re-marks from the existing set as folders collapse/expand or
+    scroll. `workspace.on("layout-change")` re-acquires/re-observes containers if
+    the pane is reopened, moved, or popped out.
+- `applyIndicators()` writes two things per explorer container: the
+  `folder-bases-indicator-<style>` class (selecting the look), and the
+  `has-folder-base` class on each `.nav-folder-title[data-path]` whose path is in
+  the set. The `"none"` style clears both. The style is realized entirely in
+  `styles.css` (no per-element style assignment).
+- Cleanup is registered with `this.register(...)`: the observer is disconnected
+  and the classes stripped on unload.
+
+`basePathFor` (the pure path builder in `src/settings.ts`, also used by
+`basePathForFolder`) is what makes the scan testable and keeps the template logic
+in one place.
+
 ## Testing
 
 The pure logic in `src/settings.ts` is unit-tested with Vitest in

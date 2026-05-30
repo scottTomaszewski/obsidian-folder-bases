@@ -1,4 +1,5 @@
 import {
+	Debouncer,
 	Notice,
 	Platform,
 	Plugin,
@@ -7,9 +8,10 @@ import {
 	TFolder,
 	View,
 	WorkspaceLeaf,
-	normalizePath,
+	debounce,
 } from "obsidian";
 import {
+	basePathFor,
 	DEFAULT_SETTINGS,
 	FolderBasesSettings,
 	FolderBasesSettingTab,
@@ -40,12 +42,40 @@ const FILE_EXPLORER_VIEW_TYPE = "file-explorer";
 /** Class added to folder titles that have an associated base. */
 const HAS_BASE_CLASS = "has-folder-base";
 
+/** Per-explorer class selecting the indicator style (suffixed with the style). */
+const INDICATOR_CLASS_PREFIX = "folder-bases-indicator-";
+
+/** Every indicator-style class, so we can strip the stale one before re-applying. */
+const INDICATOR_CLASSES = ["italic", "bold", "accent", "dot", "icon"].map(
+	(style) => INDICATOR_CLASS_PREFIX + style,
+);
+
 export default class FolderBasesPlugin extends Plugin {
 	settings!: FolderBasesSettings;
+
+	/** Folder paths that should be marked (enabled folder whose base exists). */
+	private markedFolders = new Set<string>();
+	/** Watches the explorer DOM so indicators survive collapse/expand/scroll. */
+	private explorerObserver: MutationObserver | null = null;
+	/** Rebuild the set, then re-mark (vault changed). */
+	private refreshIndicators!: Debouncer<[], void>;
+	/** Re-mark from the existing set (DOM re-rendered; vault unchanged). */
+	private reapplyIndicators!: Debouncer<[], void>;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
 		this.addSettingTab(new FolderBasesSettingTab(this.app, this));
+
+		this.refreshIndicators = debounce(() => {
+			this.rebuildMarkedFolders();
+			this.applyIndicators();
+		}, 150);
+		this.reapplyIndicators = debounce(() => this.applyIndicators(), 50);
+
+		// Mark folders once the explorer DOM and vault are ready, then keep them
+		// in sync with vault and layout changes.
+		this.app.workspace.onLayoutReady(() => this.installIndicators());
+		this.register(() => this.teardownIndicators());
 
 		// Capture phase so we run before the file explorer's own collapse/expand
 		// handler and can suppress it when we decide to open a base instead.
@@ -87,7 +117,7 @@ export default class FolderBasesPlugin extends Plugin {
 	private onClick = (evt: MouseEvent): void => {
 		const hit = this.folderFromTitleClick(evt.target);
 		if (!hit) return;
-		const { titleEl, folder } = hit;
+		const { folder } = hit;
 
 		// Does this click satisfy the configured trigger?
 		const modifierHeld = this.isModifierHeld(evt);
@@ -99,7 +129,6 @@ export default class FolderBasesPlugin extends Plugin {
 		const base = this.app.vault.getAbstractFileByPath(basePath);
 
 		if (base instanceof TFile) {
-			titleEl.addClass(HAS_BASE_CLASS);
 			if (!this.settings.collapseOnOpen) {
 				evt.preventDefault();
 				evt.stopPropagation();
@@ -128,7 +157,6 @@ export default class FolderBasesPlugin extends Plugin {
 		// Only act when a base exists; leave other middle-clicks untouched.
 		if (!(base instanceof TFile)) return;
 
-		hit.titleEl.addClass(HAS_BASE_CLASS);
 		evt.preventDefault();
 		evt.stopPropagation();
 		void this.openBase(base, "new-tab");
@@ -170,14 +198,113 @@ export default class FolderBasesPlugin extends Plugin {
 
 	/** Vault-relative path of the base file for a folder. */
 	private basePathForFolder(folder: TFolder): string {
-		const folderName = folder.name || folder.path;
-		const rendered = renderTemplate(
-			this.settings.baseNameTemplate,
-			folderName,
+		return basePathFor(
+			folder.name || folder.path,
 			folder.path,
+			this.settings.baseNameTemplate,
 		);
-		const joined = folder.path ? `${folder.path}/${rendered}` : rendered;
-		return normalizePath(joined);
+	}
+
+	// --- Persistent "has a base" indicator -------------------------------
+
+	/** Wire up the indicator: initial scan + the listeners that keep it fresh. */
+	private installIndicators(): void {
+		this.rebuildMarkedFolders();
+		this.applyIndicators();
+		this.observeExplorers();
+
+		// Vault changes can add/remove/move a base file or folder.
+		this.registerEvent(this.app.vault.on("create", this.refreshIndicators));
+		this.registerEvent(this.app.vault.on("delete", this.refreshIndicators));
+		this.registerEvent(this.app.vault.on("rename", this.refreshIndicators));
+
+		// The explorer pane may be reopened, moved, or popped out.
+		this.registerEvent(
+			this.app.workspace.on("layout-change", () => {
+				this.observeExplorers();
+				this.reapplyIndicators();
+			}),
+		);
+	}
+
+	/** Strip our classes and stop observing (runs on unload). */
+	private teardownIndicators(): void {
+		this.explorerObserver?.disconnect();
+		this.explorerObserver = null;
+		for (const container of this.explorerContainers()) {
+			container.removeClasses(INDICATOR_CLASSES);
+			for (const titleEl of this.folderTitlesIn(container)) {
+				titleEl.removeClass(HAS_BASE_CLASS);
+			}
+		}
+	}
+
+	/** Every open file-explorer view container. */
+	private explorerContainers(): HTMLElement[] {
+		return this.app.workspace
+			.getLeavesOfType(FILE_EXPLORER_VIEW_TYPE)
+			.map((leaf) => leaf.view.containerEl);
+	}
+
+	/** The folder-title elements (with a `data-path`) inside a container. */
+	private folderTitlesIn(container: HTMLElement): HTMLElement[] {
+		return Array.from(
+			container.querySelectorAll<HTMLElement>(
+				".nav-folder-title[data-path]",
+			),
+		);
+	}
+
+	/** Recompute which folders should be marked (enabled + their base exists). */
+	private rebuildMarkedFolders(): void {
+		this.markedFolders.clear();
+		for (const file of this.app.vault.getAllLoadedFiles()) {
+			if (!(file instanceof TFolder)) continue;
+			if (!isFolderEnabled(file.path, this.settings)) continue;
+			const base = this.app.vault.getAbstractFileByPath(
+				this.basePathForFolder(file),
+			);
+			if (base instanceof TFile) this.markedFolders.add(file.path);
+		}
+	}
+
+	/** Reflect the current set + chosen style onto the explorer DOM. */
+	private applyIndicators(): void {
+		const style = this.settings.indicatorStyle;
+		for (const container of this.explorerContainers()) {
+			container.removeClasses(INDICATOR_CLASSES);
+			if (style !== "none") {
+				container.addClass(INDICATOR_CLASS_PREFIX + style);
+			}
+			for (const titleEl of this.folderTitlesIn(container)) {
+				const path = titleEl.getAttribute("data-path");
+				const marked =
+					style !== "none" &&
+					path !== null &&
+					this.markedFolders.has(path);
+				titleEl.toggleClass(HAS_BASE_CLASS, marked);
+			}
+		}
+	}
+
+	/**
+	 * Observe explorer containers for child changes (collapse/expand/scroll) so
+	 * re-rendered folder titles get re-marked. Observes `childList`/`subtree`
+	 * only — not attributes — so our own class toggles can't feed back in.
+	 */
+	private observeExplorers(): void {
+		if (!this.explorerObserver) {
+			this.explorerObserver = new MutationObserver(() =>
+				this.reapplyIndicators(),
+			);
+		}
+		this.explorerObserver.disconnect();
+		for (const container of this.explorerContainers()) {
+			this.explorerObserver.observe(container, {
+				childList: true,
+				subtree: true,
+			});
+		}
 	}
 
 	private async openBase(file: TFile, location?: OpenLocation): Promise<void> {
@@ -347,5 +474,8 @@ export default class FolderBasesPlugin extends Plugin {
 
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
+		// Template/filter changes move base paths or membership; style changes
+		// swap the explorer class. A rebuild + re-mark covers all of them.
+		this.refreshIndicators();
 	}
 }

@@ -13,6 +13,9 @@ export type FolderFilterMode = "all" | "exclude" | "include";
 /** Where a base opens: current tab, a new tab, a right split, or an existing tab. */
 export type OpenLocation = "tab" | "new-tab" | "split" | "reuse";
 
+/** How folders with a base are marked in the file explorer ("none" = no marker). */
+export type IndicatorStyle = "none" | "italic" | "bold" | "accent" | "dot" | "icon";
+
 export interface FolderBasesSettings {
 	/**
 	 * Filename template for a folder's base, resolved relative to the folder.
@@ -37,6 +40,8 @@ export interface FolderBasesSettings {
 	matchSubfolders: boolean;
 	/** Where a base opens when triggered (click, command, or context menu). */
 	openLocation: OpenLocation;
+	/** How folders that have a base are marked in the file explorer. */
+	indicatorStyle: IndicatorStyle;
 }
 
 export const DEFAULT_BASE_TEMPLATE = `filters:
@@ -59,6 +64,7 @@ export const DEFAULT_SETTINGS: FolderBasesSettings = {
 	folderPatterns: "",
 	matchSubfolders: true,
 	openLocation: "tab",
+	indicatorStyle: "italic",
 };
 
 /**
@@ -88,6 +94,20 @@ export function renderTemplate(
 	return template
 		.replace(/\{\{\s*folder_name\s*\}\}/g, folderName)
 		.replace(/\{\{\s*folder_path\s*\}\}/g, folderPath);
+}
+
+/**
+ * Vault-relative path of a folder's base: render the filename template, join it
+ * onto the folder path, and normalize. Pure so it can be unit-tested and reused.
+ */
+export function basePathFor(
+	folderName: string,
+	folderPath: string,
+	template: string,
+): string {
+	const rendered = renderTemplate(template, folderName, folderPath);
+	const joined = folderPath ? `${folderPath}/${rendered}` : rendered;
+	return normalizePath(joined);
 }
 
 /**
@@ -266,6 +286,27 @@ export class FolderBasesSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.openLocation)
 					.onChange(async (value) => {
 						this.plugin.settings.openLocation = value as OpenLocation;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Folder base indicator")
+			.setDesc(
+				"How folders that have a base are marked in the file explorer.",
+			)
+			.addDropdown((dd) =>
+				dd
+					.addOption("none", "None")
+					.addOption("italic", "Italic")
+					.addOption("bold", "Bold")
+					.addOption("accent", "Accent color")
+					.addOption("dot", "Dot")
+					.addOption("icon", "Icon")
+					.setValue(this.plugin.settings.indicatorStyle)
+					.onChange(async (value) => {
+						this.plugin.settings.indicatorStyle =
+							value as IndicatorStyle;
 						await this.plugin.saveSettings();
 					}),
 			);

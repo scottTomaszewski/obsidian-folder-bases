@@ -10,12 +10,18 @@ Shipped features and their release versions are recorded in
 
 ## Next 10 features
 
-### 1. Persistent "has a base" indicator 🔲
+### 1. Persistent "has a base" indicator ✅
 Show an indicator (icon/dot/style) on folders that have a base **at all times**,
 not just after a click. Scan on load and react to vault create/delete/rename
 events, marking `.nav-folder-title[data-path=...]`.
 - **Why:** discoverability — the thing Folder Notes users rely on most.
 - **Effort:** M · **Touches:** `main.ts`, `styles.css`
+- **Shipped:** a `markedFolders` set (enabled folder + its base exists) drives a
+  `has-folder-base` class on folder titles, rebuilt on vault create/delete/rename
+  and re-applied via a `MutationObserver` on the explorer (so it survives
+  collapse/expand/scroll). A **Folder base indicator** setting picks the style
+  (none / italic / bold / accent / dot / icon), applied as a CSS class on the
+  explorer container. See `installIndicators` / `applyIndicators` in `src/main.ts`.
 
 ### 2. Hide the base file in the explorer 🔲
 Optional toggle to hide a folder's own base file (e.g. `Books/Books.base`) from
@@ -108,6 +114,8 @@ base"), for when the base lives elsewhere or has a custom name.
 
 ## Done
 
+- ✅ Persistent indicator on folders that have a base, with a configurable style
+  (none / italic / bold / accent / dot / icon) (#1).
 - ✅ Click a folder to open its base (plain or modifier + click, configurable).
 - ✅ Configurable filename template (`{{folder_name}}` / `{{folder_path}}`).
 - ✅ Auto-create a base from a template on modifier + click.

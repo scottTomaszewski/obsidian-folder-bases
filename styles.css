@@ -1,9 +1,55 @@
-/* Folder Bases — optional styling hooks. */
+/* Folder Bases — folder-base indicator styling. */
 
-/* Folders known to have a base get a subtle accent on their title.
-   The class is added when a base is opened via the plugin. */
-.nav-folder-title.has-folder-base .nav-folder-title-content {
+/* Folder titles with a base carry `has-folder-base`; the explorer container
+   carries `folder-bases-indicator-<style>` for the chosen style (see main.ts).
+   Each variant below applies only when both are present, so switching the
+   setting switches the look with no per-element style assignment. */
+
+.folder-bases-indicator-italic
+	.nav-folder-title.has-folder-base
+	.nav-folder-title-content {
 	font-style: italic;
+}
+
+.folder-bases-indicator-bold
+	.nav-folder-title.has-folder-base
+	.nav-folder-title-content {
+	font-weight: var(--font-bold);
+}
+
+.folder-bases-indicator-accent
+	.nav-folder-title.has-folder-base
+	.nav-folder-title-content {
+	color: var(--text-accent);
+}
+
+.folder-bases-indicator-dot
+	.nav-folder-title.has-folder-base
+	.nav-folder-title-content::after {
+	content: "";
+	display: inline-block;
+	width: var(--size-2-2);
+	height: var(--size-2-2);
+	margin-inline-start: var(--size-2-2);
+	border-radius: 50%;
+	background-color: var(--text-accent);
+	vertical-align: middle;
+}
+
+.folder-bases-indicator-icon
+	.nav-folder-title.has-folder-base
+	.nav-folder-title-content::after {
+	content: "";
+	display: inline-block;
+	width: var(--icon-xs);
+	height: var(--icon-xs);
+	margin-inline-start: var(--size-2-2);
+	background-color: var(--text-muted);
+	vertical-align: middle;
+	/* lucide "layout-grid", recolored via mask so it follows the theme. */
+	--folder-bases-grid-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>');
+	-webkit-mask: var(--folder-bases-grid-icon) center / contain no-repeat;
+	mask: var(--folder-bases-grid-icon) center / contain no-repeat;
 }
 
 /* Settings: default base content editor. */
