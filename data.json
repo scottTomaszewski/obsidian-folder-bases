@@ -1,0 +1,8 @@
+{
+  "baseNameTemplate": "{{folder_name}}.base",
+  "clickTrigger": "click",
+  "modifierKey": "ctrl",
+  "createOnModifierClick": true,
+  "collapseOnOpen": false,
+  "defaultBaseTemplate": "filters:\n  and:\n    - file.inFolder(\"{{folder_path}}\")\nviews:\n  - type: table\n    name: Table\n"
+}

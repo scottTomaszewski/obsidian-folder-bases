@@ -1,5 +1,7 @@
 # Folder Bases
 
+![demo](demo.png)
+
 Open a folder's associated [Base](https://help.obsidian.md/bases) by clicking it
 in the file explorer — like the *Folder Notes* community plugin, but for `.base`
 files instead of notes.
