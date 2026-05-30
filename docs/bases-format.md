@@ -53,13 +53,16 @@ substituted at creation time:
 filters:
   and:
     - file.inFolder("{{folder_path}}")
+    - file.ext == "md"
 views:
   - type: table
     name: Table
 ```
 
-For a folder `Projects`, this produces a base scoped to files in `Projects`,
-shown as a table. Edit **Default base content** in the plugin settings to change
+For a folder `Projects`, this produces a base scoped to the notes in `Projects`,
+shown as a table. The `file.ext == "md"` filter limits results to markdown notes,
+which keeps the folder's own `.base` file (and any images or other attachments)
+out of the table. Edit **Default base content** in the plugin settings to change
 what new bases look like (e.g. add columns to `order`, switch the view `type`, or
 add `filters`).
 

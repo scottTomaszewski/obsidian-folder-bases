@@ -4,5 +4,5 @@
   "modifierKey": "ctrl",
   "createOnModifierClick": true,
   "collapseOnOpen": false,
-  "defaultBaseTemplate": "filters:\n  and:\n    - file.inFolder(\"{{folder_path}}\")\nviews:\n  - type: table\n    name: Table\n"
+  "defaultBaseTemplate": "  filters:\n    and:\n      - file.inFolder(\"{{folder_path}}\")\n      - file.ext == \"md\"\n  views:\n    - type: table\n      name: Table\n"
 }

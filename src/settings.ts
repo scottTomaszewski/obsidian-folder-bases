@@ -28,6 +28,7 @@ export interface FolderBasesSettings {
 export const DEFAULT_BASE_TEMPLATE = `filters:
   and:
     - file.inFolder("{{folder_path}}")
+    - file.ext == "md"
 views:
   - type: table
     name: Table
