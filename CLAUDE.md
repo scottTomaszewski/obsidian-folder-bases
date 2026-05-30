@@ -16,6 +16,8 @@ vitest.config.ts   Test config; aliases "obsidian" to test/obsidian-mock.ts
 devbox.json        Toolchain (Node 22) + build/dev/test/run scripts
 docs/              End-user and format documentation
 ARCHITECTURE.md    How it works internally
+CHANGELOG.md       Keep a Changelog; new work goes under "Unreleased"
+ROADMAP.md         Planned features
 ```
 
 This plugin lives **inside the test vault** at
@@ -38,6 +40,20 @@ runs `npm install` on first entry.
 
 After building, reload the plugin in Obsidian (toggle off/on in
 Settings → Community plugins, or reload the app) to pick up changes.
+
+## Changelog
+
+`CHANGELOG.md` follows [Keep a Changelog](https://keepachangelog.com/) +
+[SemVer](https://semver.org/) (`MAJOR.MINOR.PATCH` — breaking / feature / fix).
+
+- **When planning or implementing any user-facing change, add an entry under the
+  `## Unreleased` section** (categories: Added / Changed / Fixed / Removed).
+  Treat this as part of "done," like updating docs and tests. Reference the
+  roadmap item number when applicable (e.g. `(#6)`).
+- Don't hand-write version headers. `devbox run release <version>` renames
+  `## Unreleased` to `## <version>` and reuses that section as the GitHub release
+  notes (see the `release` recipe in `justfile`). Pick the version per SemVer:
+  bump MINOR for a new feature, PATCH for a fix.
 
 ## Key facts
 

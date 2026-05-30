@@ -1,0 +1,52 @@
+# Changelog
+
+All notable changes to Folder Bases are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
+(`MAJOR.MINOR.PATCH` — incompatible change / new feature / bug fix).
+
+Unreleased changes accumulate under **Unreleased**; cutting a release
+(`devbox run release <version>`) renames that section to the new version header.
+
+## Unreleased
+
+### Added
+- Commands (with user-assignable hotkeys; none bound by default): open base for
+  the active folder, create base for the active folder, reveal base file in the
+  file explorer, and — on desktop — open the base file in the default app or show
+  it in the system file manager. The "active folder" is resolved smartly: the
+  file explorer's focused folder when the explorer is focused, otherwise the
+  active note's parent folder (#4).
+- **Open base in** setting — choose where a base opens: current tab, new tab,
+  split right, or reuse an already-open tab. Middle-clicking a folder always
+  opens its base in a new tab (#6).
+- Vitest unit-test harness covering the pure settings logic (`devbox run test`).
+
+## 1.1.0
+
+### Added
+- Exclude / include folder filter so only certain folders trigger base behavior,
+  with `*` glob patterns and optional subfolder matching (#5).
+- Roadmap document.
+
+## 1.0.2
+
+### Changed
+- The default base template now excludes the folder's own `.base` file, listing
+  notes only (`file.ext == "md"`).
+
+## 1.0.1
+
+### Changed
+- Added the author URL to the manifest and normalized the lockfile (maintenance).
+
+## 1.0.0
+
+### Added
+- Initial release: click a folder in the file explorer to open its associated
+  `.base` (plain click or modifier + click, configurable).
+- Configurable base filename template with `{{folder_name}}` / `{{folder_path}}`
+  tokens (default: a same-named `.base` inside the folder).
+- Optionally create a base from a template on modifier + click when none exists.
+- Folder right-click menu: open or create the folder's base.

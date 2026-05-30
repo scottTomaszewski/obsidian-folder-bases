@@ -36,10 +36,18 @@ release version:
 	jq --arg v "$version" '.version = $v' package.json > package.tmp && mv package.tmp package.json
 	jq --arg v "$version" --arg m "$min_app_version" '.[$v] = $m' versions.json > versions.tmp && mv versions.tmp versions.json
 
+	# Promote the changelog's "Unreleased" section to this version, then use that
+	# section's body as the GitHub release notes.
+	if [[ -f CHANGELOG.md ]] && grep -q '^## Unreleased$' CHANGELOG.md; then
+		sed -i "s/^## Unreleased$/## $version/" CHANGELOG.md
+	fi
+	notes="$(awk -v ver="## $version" '$0==ver{g=1;next} /^## /&&g{exit} g' CHANGELOG.md 2>/dev/null | sed '/^$/d')"
+	[[ -z "$notes" ]] && notes="Release $version"
+
 	# Produce the release artifact (type-check + bundle to main.js).
 	npm run build
 
-	git add manifest.json package.json versions.json
+	git add manifest.json package.json versions.json CHANGELOG.md
 	git commit -m "Release $version"
 	git push -u origin HEAD
 
@@ -47,5 +55,5 @@ release version:
 	gh release create "$version" \
 		--title "$version" \
 		--target "$(git rev-parse --abbrev-ref HEAD)" \
-		--notes "Release $version" \
+		--notes "$notes" \
 		main.js manifest.json styles.css

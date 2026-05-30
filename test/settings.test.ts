@@ -6,6 +6,7 @@ import {
 	folderMatchesPatterns,
 	globToRegExp,
 	isFolderEnabled,
+	paneArgForOpenLocation,
 	parsePatterns,
 	renderTemplate,
 } from "../src/settings";
@@ -157,6 +158,24 @@ describe("folderMatchesPatterns", () => {
 		expect(folderMatchesPatterns("Daily Notes/2024", "Daily Notes", true)).toBe(
 			true,
 		);
+	});
+});
+
+describe("paneArgForOpenLocation", () => {
+	it("opens in the current tab for 'tab'", () => {
+		expect(paneArgForOpenLocation("tab")).toBe(false);
+	});
+
+	it("opens a new tab for 'new-tab'", () => {
+		expect(paneArgForOpenLocation("new-tab")).toBe("tab");
+	});
+
+	it("splits for 'split'", () => {
+		expect(paneArgForOpenLocation("split")).toBe("split");
+	});
+
+	it("behaves like the current tab for 'reuse' (resolved earlier)", () => {
+		expect(paneArgForOpenLocation("reuse")).toBe(false);
 	});
 });
 

@@ -5,6 +5,9 @@ T-shirt size (S / M / L). "Touches" lists the main files involved.
 
 Status legend: 🔲 planned · 🚧 in progress · ✅ done
 
+Shipped features and their release versions are recorded in
+[`CHANGELOG.md`](CHANGELOG.md).
+
 ## Next 10 features
 
 ### 1. Persistent "has a base" indicator 🔲
@@ -28,12 +31,16 @@ rewrite the filter via `vault.on("rename")` + `Vault.process()`.
 - **Why:** prevents silent breakage — the biggest footgun of the same-name convention.
 - **Effort:** M · **Touches:** `main.ts`
 
-### 4. Commands with assignable hotkeys 🔲
-`addCommand` for: open base for the active folder, open base for the folder of
-the current note, create base for the active folder, reveal base file. No default
-hotkeys (per Obsidian rules); users bind their own.
+### 4. Commands with assignable hotkeys ✅
+`addCommand` for: open base for the active folder, create base for the active
+folder, reveal base file, plus desktop-only "open in default app" / "show in
+system explorer". No default hotkeys (per Obsidian rules); users bind their own.
 - **Why:** keyboard-driven workflows; also an accessibility win.
 - **Effort:** S · **Touches:** `main.ts`
+- **Shipped:** the "active folder" is resolved smartly — the file explorer's
+  focused folder when the explorer is focused, otherwise the active note's
+  parent folder — so a single command covers both the original "active folder"
+  and "current note's folder" ideas. See `resolveActiveFolder` in `src/main.ts`.
 
 ### 5. Excluded / included folders ✅
 Glob or path-prefix lists so certain folders (e.g. `Templates/`, `Archive/`)
@@ -44,11 +51,14 @@ never trigger base behavior.
   newline-separated pattern list, `*` glob support, and a *Match subfolders*
   toggle. See `isFolderEnabled` in `src/settings.ts`.
 
-### 6. Open-location options 🔲
-Setting for how the base opens: current tab (today), new tab, split right, or
-"focus existing tab if already open." Support middle-click → new tab.
+### 6. Open-location options ✅
+Setting for how the base opens: current tab (default), new tab, split right, or
+"reuse existing tab if already open." Middle-click → new tab.
 - **Why:** always opening in the current leaf replaces whatever you were viewing.
-- **Effort:** S · **Touches:** `main.ts`
+- **Effort:** S · **Touches:** `main.ts`, `settings.ts`
+- **Shipped:** an **Open base in** setting (current tab / new tab / split right /
+  reuse existing tab) applied to every open path, plus middle-click → new tab.
+  See `openLocation` / `paneArgForOpenLocation` in `src/settings.ts`.
 
 ### 7. Auto-create a base for newly created folders 🔲
 Optional: when a new folder is created, generate its base from the template
@@ -85,6 +95,9 @@ base"), for when the base lives elsewhere or has a custom name.
 
 ## Backlog / nice-to-have
 
+- Notebook Navigator explorer support for the active-folder commands (its view
+  isn't `file-explorer`, so `resolveActiveFolder` currently ignores its
+  selection and falls back to the active note's folder).
 - Ribbon icon for quick access.
 - Localization / i18n.
 - Mobile tap-target tuning.
@@ -101,4 +114,8 @@ base"), for when the base lives elsewhere or has a custom name.
 - ✅ Folder right-click menu: open / create folder base.
 - ✅ Default template excludes the folder's own `.base` (notes only via `file.ext == "md"`).
 - ✅ Exclude / include folder filter with glob patterns and subfolder matching (#5).
+- ✅ Commands (open / create / reveal / open-in-default-app / show-in-system) with
+  user-assignable hotkeys and smart active-folder resolution (#4).
+- ✅ Open-location options (current tab / new tab / split right / reuse existing
+  tab) plus middle-click → new tab (#6).
 - ✅ Vitest unit-test harness covering the pure settings logic (`test/`, `devbox run test`).

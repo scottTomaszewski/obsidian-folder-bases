@@ -1,11 +1,41 @@
-import { Notice, Plugin, TFile, TFolder, normalizePath } from "obsidian";
+import {
+	Notice,
+	Platform,
+	Plugin,
+	TAbstractFile,
+	TFile,
+	TFolder,
+	View,
+	WorkspaceLeaf,
+	normalizePath,
+} from "obsidian";
 import {
 	DEFAULT_SETTINGS,
 	FolderBasesSettings,
 	FolderBasesSettingTab,
 	isFolderEnabled,
+	OpenLocation,
+	paneArgForOpenLocation,
 	renderTemplate,
 } from "./settings";
+
+// Typed views of runtime-only Obsidian APIs that aren't in the public types.
+declare module "obsidian" {
+	interface App {
+		/** Reveal a vault file in the OS file manager (desktop only). */
+		showInFolder(path: string): void;
+		/** Open a vault file with the OS default app (desktop only). */
+		openWithDefaultApp(path: string): void;
+	}
+}
+
+/** Minimal shape of the core file-explorer view that we rely on. */
+interface FileExplorerView extends View {
+	tree?: { focusedItem?: { file?: TAbstractFile } };
+	revealInFolder?(file: TAbstractFile): void;
+}
+
+const FILE_EXPLORER_VIEW_TYPE = "file-explorer";
 
 /** Class added to folder titles that have an associated base. */
 const HAS_BASE_CLASS = "has-folder-base";
@@ -20,6 +50,13 @@ export default class FolderBasesPlugin extends Plugin {
 		// Capture phase so we run before the file explorer's own collapse/expand
 		// handler and can suppress it when we decide to open a base instead.
 		this.registerDomEvent(document, "click", this.onClick, { capture: true });
+
+		// Middle-click a folder title to open its base in a new tab.
+		this.registerDomEvent(document, "auxclick", this.onAuxClick, {
+			capture: true,
+		});
+
+		this.registerCommands();
 
 		// Right-click menu on folders, for discoverability.
 		this.registerEvent(
@@ -48,23 +85,9 @@ export default class FolderBasesPlugin extends Plugin {
 	}
 
 	private onClick = (evt: MouseEvent): void => {
-		const target = evt.target;
-		if (!(target instanceof HTMLElement)) return;
-
-		// Let the collapse chevron always toggle the folder.
-		if (target.closest(".nav-folder-collapse-indicator")) return;
-
-		const titleEl = target.closest(".nav-folder-title");
-		if (!(titleEl instanceof HTMLElement)) return;
-
-		const folderPath = titleEl.getAttribute("data-path");
-		if (folderPath === null) return;
-
-		const folder = this.app.vault.getAbstractFileByPath(folderPath);
-		if (!(folder instanceof TFolder)) return;
-
-		// Respect the folder filter; excluded folders behave like normal folders.
-		if (!isFolderEnabled(folder.path, this.settings)) return;
+		const hit = this.folderFromTitleClick(evt.target);
+		if (!hit) return;
+		const { titleEl, folder } = hit;
 
 		// Does this click satisfy the configured trigger?
 		const modifierHeld = this.isModifierHeld(evt);
@@ -94,6 +117,51 @@ export default class FolderBasesPlugin extends Plugin {
 		// Otherwise leave the event alone so the folder toggles normally.
 	};
 
+	private onAuxClick = (evt: MouseEvent): void => {
+		// Middle button only.
+		if (evt.button !== 1) return;
+		const hit = this.folderFromTitleClick(evt.target);
+		if (!hit) return;
+
+		const basePath = this.basePathForFolder(hit.folder);
+		const base = this.app.vault.getAbstractFileByPath(basePath);
+		// Only act when a base exists; leave other middle-clicks untouched.
+		if (!(base instanceof TFile)) return;
+
+		hit.titleEl.addClass(HAS_BASE_CLASS);
+		evt.preventDefault();
+		evt.stopPropagation();
+		void this.openBase(base, "new-tab");
+	};
+
+	/**
+	 * Resolve the enabled folder for a click on a `.nav-folder-title`, or null
+	 * when the target isn't an actionable folder title (chevron, non-folder, or
+	 * a folder excluded by the filter).
+	 */
+	private folderFromTitleClick(
+		target: EventTarget | null,
+	): { titleEl: HTMLElement; folder: TFolder } | null {
+		if (!(target instanceof HTMLElement)) return null;
+
+		// Let the collapse chevron always toggle the folder.
+		if (target.closest(".nav-folder-collapse-indicator")) return null;
+
+		const titleEl = target.closest(".nav-folder-title");
+		if (!(titleEl instanceof HTMLElement)) return null;
+
+		const folderPath = titleEl.getAttribute("data-path");
+		if (folderPath === null) return null;
+
+		const folder = this.app.vault.getAbstractFileByPath(folderPath);
+		if (!(folder instanceof TFolder)) return null;
+
+		// Respect the folder filter; excluded folders behave like normal folders.
+		if (!isFolderEnabled(folder.path, this.settings)) return null;
+
+		return { titleEl, folder };
+	}
+
 	private isModifierHeld(evt: MouseEvent): boolean {
 		if (this.settings.modifierKey === "alt") return evt.altKey;
 		// Treat Cmd (mac) the same as Ctrl.
@@ -112,8 +180,136 @@ export default class FolderBasesPlugin extends Plugin {
 		return normalizePath(joined);
 	}
 
-	private async openBase(file: TFile): Promise<void> {
-		await this.app.workspace.getLeaf(false).openFile(file);
+	private async openBase(file: TFile, location?: OpenLocation): Promise<void> {
+		const loc = location ?? this.settings.openLocation;
+
+		if (loc === "reuse") {
+			const existing = this.findLeafShowingFile(file);
+			if (existing) {
+				this.app.workspace.setActiveLeaf(existing, { focus: true });
+				await this.app.workspace.revealLeaf(existing);
+				return;
+			}
+			// Not open anywhere: fall back to a new tab.
+			await this.app.workspace.getLeaf("tab").openFile(file);
+			return;
+		}
+
+		await this.app.workspace
+			.getLeaf(paneArgForOpenLocation(loc))
+			.openFile(file);
+	}
+
+	/** The first open leaf already showing `file`, or null. */
+	private findLeafShowingFile(file: TFile): WorkspaceLeaf | null {
+		let found: WorkspaceLeaf | null = null;
+		this.app.workspace.iterateAllLeaves((leaf) => {
+			if (found) return;
+			if (leaf.getViewState().state?.file === file.path) found = leaf;
+		});
+		return found;
+	}
+
+	/**
+	 * Best-effort "active folder": the file explorer's focused item when the
+	 * explorer is focused, otherwise the active note's parent, else the vault
+	 * root.
+	 */
+	private resolveActiveFolder(): TFolder {
+		const leaf = this.app.workspace.activeLeaf;
+		if (leaf && leaf.view.getViewType() === FILE_EXPLORER_VIEW_TYPE) {
+			const item = (leaf.view as FileExplorerView).tree?.focusedItem?.file;
+			if (item instanceof TFolder) return item;
+			if (item instanceof TFile && item.parent instanceof TFolder) {
+				return item.parent;
+			}
+		}
+		const active = this.app.workspace.getActiveFile();
+		if (active?.parent instanceof TFolder) return active.parent;
+		return this.app.vault.getRoot();
+	}
+
+	/** Reveal a file in the core file-explorer nav pane. */
+	private revealInExplorer(file: TFile): void {
+		const leaf = this.app.workspace.getLeavesOfType(
+			FILE_EXPLORER_VIEW_TYPE,
+		)[0];
+		const view = leaf?.view as FileExplorerView | undefined;
+		if (view?.revealInFolder) {
+			view.revealInFolder(file);
+		} else {
+			new Notice("Folder Bases: file explorer is not available");
+		}
+	}
+
+	/** The existing base file for the active folder, or null. */
+	private activeFolderBase(): TFile | null {
+		const folder = this.resolveActiveFolder();
+		if (!isFolderEnabled(folder.path, this.settings)) return null;
+		const base = this.app.vault.getAbstractFileByPath(
+			this.basePathForFolder(folder),
+		);
+		return base instanceof TFile ? base : null;
+	}
+
+	private registerCommands(): void {
+		this.addCommand({
+			id: "open-active-folder-base",
+			name: "Open base for the active folder",
+			checkCallback: (checking) => {
+				const base = this.activeFolderBase();
+				if (!base) return false;
+				if (!checking) void this.openBase(base);
+				return true;
+			},
+		});
+
+		this.addCommand({
+			id: "create-active-folder-base",
+			name: "Create base for the active folder",
+			checkCallback: (checking) => {
+				const folder = this.resolveActiveFolder();
+				if (!isFolderEnabled(folder.path, this.settings)) return false;
+				if (!checking) void this.createAndOpenBase(folder);
+				return true;
+			},
+		});
+
+		this.addCommand({
+			id: "reveal-active-folder-base",
+			name: "Reveal base file in file explorer",
+			checkCallback: (checking) => {
+				const base = this.activeFolderBase();
+				if (!base) return false;
+				if (!checking) this.revealInExplorer(base);
+				return true;
+			},
+		});
+
+		// OS-level actions only exist on desktop.
+		if (Platform.isDesktopApp) {
+			this.addCommand({
+				id: "open-active-folder-base-default-app",
+				name: "Open base file in default app",
+				checkCallback: (checking) => {
+					const base = this.activeFolderBase();
+					if (!base) return false;
+					if (!checking) this.app.openWithDefaultApp(base.path);
+					return true;
+				},
+			});
+
+			this.addCommand({
+				id: "show-active-folder-base-in-system",
+				name: "Show base file in system explorer",
+				checkCallback: (checking) => {
+					const base = this.activeFolderBase();
+					if (!base) return false;
+					if (!checking) this.app.showInFolder(base.path);
+					return true;
+				},
+			});
+		}
 	}
 
 	private async createAndOpenBase(folder: TFolder): Promise<void> {

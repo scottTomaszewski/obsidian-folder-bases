@@ -41,10 +41,14 @@ devbox run release 1.0.1   # or: just release 1.0.1
 ```
 
 Requires a clean working tree and `gh` authenticated to the repo. Use a plain
-semver version with no leading `v` (Obsidian tags omit it).
+semver version with no leading `v` (Obsidian tags omit it). The release promotes
+the changelog's **Unreleased** section to the new version header and uses it as
+the GitHub release notes, so keep [`CHANGELOG.md`](CHANGELOG.md) up to date as
+you work.
 
 ## Documentation
 
+- [Changelog](CHANGELOG.md)
 - [Usage & settings](docs/usage.md)
 - [The `.base` file format](docs/bases-format.md)
 - [Architecture](ARCHITECTURE.md)

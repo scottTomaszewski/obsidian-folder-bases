@@ -8,8 +8,8 @@ of (or in addition to) the default expand/collapse.
 
 | File | Responsibility |
 |------|----------------|
-| `src/main.ts` | `FolderBasesPlugin` — lifecycle, click interception, base resolution, open/create, folder context menu. |
-| `src/settings.ts` | `FolderBasesSettings` + `DEFAULT_SETTINGS`, the `renderTemplate` token helper, and `FolderBasesSettingTab` (the settings UI). |
+| `src/main.ts` | `FolderBasesPlugin` — lifecycle, click/middle-click interception, base resolution, open/create, commands, folder context menu. |
+| `src/settings.ts` | `FolderBasesSettings` + `DEFAULT_SETTINGS`, the `renderTemplate` token helper, `paneArgForOpenLocation`, and `FolderBasesSettingTab` (the settings UI). |
 
 There is **no custom Obsidian view**. Obsidian's core *Bases* plugin already
 registers the `.base` file extension and its view. Opening a `.base` `TFile`
@@ -42,6 +42,13 @@ Key choices:
 - **`registerDomEvent` / `registerEvent`**: both auto-unregister on plugin
   unload, so there is no manual teardown in `onunload`.
 
+A second capture-phase `auxclick` listener (`onAuxClick`) handles **middle-click**:
+on the middle button over a folder whose base exists, it `preventDefault`s and
+opens the base in a new tab (`openBase(base, "new-tab")`), ignoring the
+configured open location. Both handlers share `folderFromTitleClick`, which
+resolves the `.nav-folder-title` → enabled `TFolder` (or null for the chevron,
+non-folders, and filtered-out folders).
+
 ## Base resolution
 
 `basePathForFolder(folder)`:
@@ -57,19 +64,46 @@ So folder `Projects` with the default template resolves to
 
 ## Open / create
 
-- `openBase(file)` → `app.workspace.getLeaf(false).openFile(file)`. When a click
-  opens an existing base, `onClick` also tags that title element with the
-  `has-folder-base` CSS class (a styling hook).
+- `openBase(file, location?)` opens the base according to `location` (defaulting
+  to the `openLocation` setting). `paneArgForOpenLocation` (in `src/settings.ts`)
+  maps the choice to a `getLeaf` argument: *current tab* → `false`, *new tab* →
+  `"tab"`, *split right* → `"split"`. The *reuse* choice is handled first:
+  `findLeafShowingFile` walks `iterateAllLeaves`, comparing each leaf's
+  `getViewState().state.file` to the base path; a match is focused via
+  `setActiveLeaf(..., { focus: true })` + `revealLeaf`, otherwise it falls back to
+  a new tab. When a click opens an existing base, `onClick` also tags that title
+  element with the `has-folder-base` CSS class (a styling hook).
 - `createAndOpenBase(folder)` → renders `defaultBaseTemplate` (a valid Bases YAML
   document; see `docs/bases-format.md`), writes it with `app.vault.create`, shows
   a `Notice`, and opens it. Failures are caught and surfaced via `Notice` +
   `console.error`.
 
+## Commands
+
+`registerCommands` adds palette commands (no default hotkeys, per Obsidian
+rules), each a `checkCallback` that only activates when applicable:
+
+- **Open / Reveal / Open-in-default-app / Show-in-system-explorer** all target
+  the active folder's existing base (`activeFolderBase()`), so they're hidden
+  when no base exists. **Create** only needs an enabled folder.
+- The two OS-level commands are registered only when `Platform.isDesktopApp`, and
+  call `app.openWithDefaultApp` / `app.showInFolder` — runtime-only APIs typed via
+  a local `declare module "obsidian"` augmentation in `main.ts`.
+- `resolveActiveFolder()` is the "smart active folder" heuristic: if the focused
+  leaf is the core `file-explorer` view, it reads the explorer's focused item
+  (`view.tree.focusedItem.file`, typed via a minimal `FileExplorerView`
+  interface); otherwise it uses the active note's parent folder, falling back to
+  the vault root. Third-party explorers (e.g. Notebook Navigator) aren't
+  `file-explorer`, so they fall through to the active-note branch.
+- `revealInExplorer(file)` grabs the first `file-explorer` leaf's view and calls
+  its `revealInFolder`, with a `Notice` fallback if unavailable.
+
 ## Settings
 
 Stored via `loadData`/`saveData`. The settings tab exposes: filename template,
 click trigger (plain vs modifier), modifier key (Ctrl/Cmd vs Alt/Option),
-create-on-modifier-click toggle, toggle-folder-on-open toggle, the default base
+create-on-modifier-click toggle, toggle-folder-on-open toggle, **open location**
+(current tab / new tab / split right / reuse existing tab), the default base
 YAML, and the **folder filter** (mode + patterns + match-subfolders).
 
 ### Folder filter

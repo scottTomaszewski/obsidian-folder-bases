@@ -38,6 +38,7 @@ The filename is configurable (see Settings).
 | **Modifier key** | Ctrl/Cmd or Alt/Option. Used both for the modifier trigger and for creating a base on click. |
 | **Create base on modifier + click** | When a folder has no base, a modifier + click creates one from the default template and opens it. |
 | **Toggle folder when opening** | When a plain click opens a base, also expand/collapse the folder as usual. Off by default (folder stays put). |
+| **Open base in** | Where a base opens: *Current tab* (default), *New tab*, *Split right*, or *Reuse existing tab* (focuses an already-open tab if there is one). Applies to clicks, commands, and the right-click menu. Middle-clicking a folder always opens in a new tab. |
 | **Default base content** | YAML written into newly created `.base` files. Tokens: `{{folder_name}}`, `{{folder_path}}`. |
 | **Folder filter** | Which folders respond to clicks: *All folders* (default), *Exclude these folders*, or *Only these folders*. |
 | **Folder patterns** | One folder path per line (shown when the filter isn't *All folders*). `*` is a wildcard, e.g. `*/drafts`. Matching is case-sensitive. |
@@ -60,6 +61,25 @@ settings — so you never lose normal folder navigation.
 
 Right-clicking a folder shows **Open folder base** (if one exists) or **Create
 folder base** (if it doesn't).
+
+## Commands & hotkeys
+
+The plugin registers commands you can run from the command palette or bind to
+your own hotkeys (**Settings → Hotkeys**; none are bound by default, per
+Obsidian's guidelines):
+
+| Command | What it does |
+|---------|--------------|
+| **Open base for the active folder** | Opens the base for the *active folder* (see below). Only available when that base exists. |
+| **Create base for the active folder** | Creates a base for the active folder from the template and opens it. |
+| **Reveal base file in file explorer** | Scrolls to and highlights the active folder's base in the file explorer. |
+| **Open base file in default app** | *(Desktop only)* Opens the base with your OS's default app for `.base` files. |
+| **Show base file in system explorer** | *(Desktop only)* Reveals the base in your OS file manager. |
+
+The **active folder** is resolved smartly: if the file explorer pane is focused,
+its selected folder is used; otherwise the parent folder of the currently open
+note is used. So whether you're navigating files or editing a note, the commands
+target the folder you'd expect.
 
 ## Quick test (in the demo vault)
 

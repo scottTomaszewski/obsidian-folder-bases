@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, normalizePath } from "obsidian";
+import { App, PluginSettingTab, Setting, normalizePath, type PaneType } from "obsidian";
 import type FolderBasesPlugin from "./main";
 
 /** How a folder-title click is mapped to "open the base". */
@@ -9,6 +9,9 @@ export type ModifierKey = "ctrl" | "alt";
 
 /** Which folders the plugin acts on. */
 export type FolderFilterMode = "all" | "exclude" | "include";
+
+/** Where a base opens: current tab, a new tab, a right split, or an existing tab. */
+export type OpenLocation = "tab" | "new-tab" | "split" | "reuse";
 
 export interface FolderBasesSettings {
 	/**
@@ -32,6 +35,8 @@ export interface FolderBasesSettings {
 	folderPatterns: string;
 	/** When matching patterns, also match a folder's descendants. */
 	matchSubfolders: boolean;
+	/** Where a base opens when triggered (click, command, or context menu). */
+	openLocation: OpenLocation;
 }
 
 export const DEFAULT_BASE_TEMPLATE = `filters:
@@ -53,7 +58,26 @@ export const DEFAULT_SETTINGS: FolderBasesSettings = {
 	folderFilterMode: "all",
 	folderPatterns: "",
 	matchSubfolders: true,
+	openLocation: "tab",
 };
+
+/**
+ * Map an open location to the argument for `Workspace.getLeaf(...)`. "reuse" is
+ * resolved before this is called (it focuses an already-open tab, else falls
+ * back to a new tab), so here it behaves like the current tab.
+ */
+export function paneArgForOpenLocation(loc: OpenLocation): PaneType | boolean {
+	switch (loc) {
+		case "new-tab":
+			return "tab";
+		case "split":
+			return "split";
+		case "tab":
+		case "reuse":
+		default:
+			return false;
+	}
+}
 
 /** Replace {{folder_name}} / {{folder_path}} tokens in a template string. */
 export function renderTemplate(
@@ -224,6 +248,24 @@ export class FolderBasesSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.collapseOnOpen)
 					.onChange(async (value) => {
 						this.plugin.settings.collapseOnOpen = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Open base in")
+			.setDesc(
+				"Where a base opens when triggered. 'Reuse existing tab' focuses an already-open tab if there is one. Middle-clicking a folder always opens in a new tab.",
+			)
+			.addDropdown((dd) =>
+				dd
+					.addOption("tab", "Current tab")
+					.addOption("new-tab", "New tab")
+					.addOption("split", "Split right")
+					.addOption("reuse", "Reuse existing tab")
+					.setValue(this.plugin.settings.openLocation)
+					.onChange(async (value) => {
+						this.plugin.settings.openLocation = value as OpenLocation;
 						await this.plugin.saveSettings();
 					}),
 			);
