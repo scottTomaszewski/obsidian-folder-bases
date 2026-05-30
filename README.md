@@ -45,6 +45,7 @@ semver version with no leading `v` (Obsidian tags omit it).
 - [Usage & settings](docs/usage.md)
 - [The `.base` file format](docs/bases-format.md)
 - [Architecture](ARCHITECTURE.md)
+- [Roadmap](ROADMAP.md)
 
 ## Known limitations
 
