@@ -1,7 +1,7 @@
 {
   "id": "folder-bases",
   "name": "Folder Bases",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "minAppVersion": "1.8.0",
   "description": "Open a folder's associated Base by clicking it in the file explorer, like Folder Notes but for Bases.",
   "author": "Scott Tomaszewski",
