@@ -35,11 +35,14 @@ hotkeys (per Obsidian rules); users bind their own.
 - **Why:** keyboard-driven workflows; also an accessibility win.
 - **Effort:** S · **Touches:** `main.ts`
 
-### 5. Excluded / included folders 🔲
+### 5. Excluded / included folders ✅
 Glob or path-prefix lists so certain folders (e.g. `Templates/`, `Archive/`)
 never trigger base behavior.
 - **Why:** avoids the plugin hijacking folders where it isn't wanted.
 - **Effort:** M · **Touches:** `settings.ts`, `main.ts`
+- **Shipped:** single **Folder filter** mode (All / Exclude / Only these) with a
+  newline-separated pattern list, `*` glob support, and a *Match subfolders*
+  toggle. See `isFolderEnabled` in `src/settings.ts`.
 
 ### 6. Open-location options 🔲
 Setting for how the base opens: current tab (today), new tab, split right, or
@@ -94,3 +97,4 @@ base"), for when the base lives elsewhere or has a custom name.
 - ✅ Auto-create a base from a template on modifier + click.
 - ✅ Folder right-click menu: open / create folder base.
 - ✅ Default template excludes the folder's own `.base` (notes only via `file.ext == "md"`).
+- ✅ Exclude / include folder filter with glob patterns and subfolder matching (#5).

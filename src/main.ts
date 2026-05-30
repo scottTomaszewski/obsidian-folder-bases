@@ -3,6 +3,7 @@ import {
 	DEFAULT_SETTINGS,
 	FolderBasesSettings,
 	FolderBasesSettingTab,
+	isFolderEnabled,
 	renderTemplate,
 } from "./settings";
 
@@ -24,6 +25,7 @@ export default class FolderBasesPlugin extends Plugin {
 		this.registerEvent(
 			this.app.workspace.on("file-menu", (menu, file) => {
 				if (!(file instanceof TFolder)) return;
+				if (!isFolderEnabled(file.path, this.settings)) return;
 				const basePath = this.basePathForFolder(file);
 				const existing = this.app.vault.getAbstractFileByPath(basePath);
 				if (existing instanceof TFile) {
@@ -60,6 +62,9 @@ export default class FolderBasesPlugin extends Plugin {
 
 		const folder = this.app.vault.getAbstractFileByPath(folderPath);
 		if (!(folder instanceof TFolder)) return;
+
+		// Respect the folder filter; excluded folders behave like normal folders.
+		if (!isFolderEnabled(folder.path, this.settings)) return;
 
 		// Does this click satisfy the configured trigger?
 		const modifierHeld = this.isModifierHeld(evt);

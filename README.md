@@ -12,6 +12,8 @@ files instead of notes.
 - Configurable base filename, with `{{folder_name}}` / `{{folder_path}}` tokens
   (default: a same-named `.base` inside the folder).
 - Optionally create a base from a template on modifier + click when none exists.
+- Scope which folders respond with an exclude/include filter (glob patterns,
+  optional subfolder matching).
 - The collapse chevron always expands/collapses, so normal folder navigation is
   never lost.
 - Right-click a folder for **Open folder base** / **Create folder base**.

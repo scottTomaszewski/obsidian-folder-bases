@@ -39,9 +39,22 @@ The filename is configurable (see Settings).
 | **Create base on modifier + click** | When a folder has no base, a modifier + click creates one from the default template and opens it. |
 | **Toggle folder when opening** | When a plain click opens a base, also expand/collapse the folder as usual. Off by default (folder stays put). |
 | **Default base content** | YAML written into newly created `.base` files. Tokens: `{{folder_name}}`, `{{folder_path}}`. |
+| **Folder filter** | Which folders respond to clicks: *All folders* (default), *Exclude these folders*, or *Only these folders*. |
+| **Folder patterns** | One folder path per line (shown when the filter isn't *All folders*). `*` is a wildcard, e.g. `*/drafts`. Matching is case-sensitive. |
+| **Match subfolders** | When on, a pattern also matches folders nested inside it (e.g. `Archive` covers `Archive/2024`). |
 
 The folder's collapse arrow (chevron) **always** expands/collapses, regardless of
 settings — so you never lose normal folder navigation.
+
+### Folder filter examples
+
+- **Exclude these folders** with patterns `Templates` and `Archive` → those
+  folders (and, with *Match subfolders* on, everything inside them) behave like
+  normal folders; everywhere else opens bases as usual.
+- **Only these folders** with pattern `Projects` → only `Projects` (and its
+  subfolders) opens a base; all other folders are untouched.
+- An empty pattern list is treated as "no filter" — every folder stays active, so
+  you can't accidentally lock yourself out.
 
 ## Right-click menu
 
