@@ -8,10 +8,12 @@ Bases.
 
 ```
 src/main.ts        Plugin entry: click interception, base resolve/open/create, context menu
-src/settings.ts    Settings interface, defaults, template rendering, settings tab
+src/settings.ts    Settings interface, defaults, pure helpers, settings tab
+test/              Vitest unit tests + an "obsidian" module mock
 manifest.json      Obsidian plugin manifest (id: folder-bases)
 esbuild.config.mjs Bundles src/main.ts -> main.js
-devbox.json        Toolchain (Node 22) + build/dev/run scripts
+vitest.config.ts   Test config; aliases "obsidian" to test/obsidian-mock.ts
+devbox.json        Toolchain (Node 22) + build/dev/test/run scripts
 docs/              End-user and format documentation
 ARCHITECTURE.md    How it works internally
 ```
@@ -27,6 +29,7 @@ runs `npm install` on first entry.
 
 - `devbox run build` — type-check + production bundle to `main.js`
 - `devbox run dev` — esbuild watch mode (rebuild on save)
+- `devbox run test` — run the Vitest unit tests (`npm run test:watch` for watch mode)
 - `devbox run release <version>` — bump version (manifest/package/versions.json),
   build, commit, push, and publish a GitHub release with the assets attached
   (delegates to the `release` recipe in `justfile`; needs a clean tree and an
@@ -48,6 +51,14 @@ Settings → Community plugins, or reload the app) to pick up changes.
 - **Base path** = folder path + rendered `baseNameTemplate` (default
   `{{folder_name}}.base`). See `basePathForFolder` in `src/main.ts`.
 
-## Testing manually
+## Testing
 
-See `docs/usage.md` for the end-to-end test flow in the demo vault.
+- **Unit tests** (`test/settings.test.ts`, run with `devbox run test`) cover the
+  pure logic in `src/settings.ts`: `renderTemplate`, `globToRegExp`,
+  `parsePatterns`, `folderMatchesPatterns`, and `isFolderEnabled`. Keep these
+  functions pure and exported so they stay testable without the Obsidian runtime.
+- Tests import `src/settings.ts`, which imports `"obsidian"`. Vitest aliases that
+  to `test/obsidian-mock.ts` (a tiny stub providing `normalizePath` and inert UI
+  class stubs). If you reference a new `obsidian` symbol from tested code, add it
+  to the mock.
+- **Manual / end-to-end:** see `docs/usage.md` for the flow in the demo vault.

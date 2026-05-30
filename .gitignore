@@ -4,6 +4,9 @@ main.js
 # dependencies
 node_modules/
 
+# test coverage
+coverage/
+
 # devbox
 .devbox/
 

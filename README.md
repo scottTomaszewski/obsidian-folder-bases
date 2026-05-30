@@ -23,6 +23,7 @@ files instead of notes.
 ```bash
 devbox run build      # type-check + bundle to main.js
 # or: devbox run dev  # watch mode
+devbox run test       # run the unit tests
 ```
 
 Then enable **Folder Bases** in Settings → Community plugins. To use in another

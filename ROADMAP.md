@@ -89,6 +89,9 @@ base"), for when the base lives elsewhere or has a custom name.
 - Localization / i18n.
 - Mobile tap-target tuning.
 - "Create a base from the currently selected notes."
+- Broaden test coverage to `src/main.ts` behaviors (base-path resolution, the
+  click/menu guards) once that logic is factored to be testable without the
+  Obsidian runtime.
 
 ## Done
 
@@ -98,3 +101,4 @@ base"), for when the base lives elsewhere or has a custom name.
 - ✅ Folder right-click menu: open / create folder base.
 - ✅ Default template excludes the folder's own `.base` (notes only via `file.ext == "md"`).
 - ✅ Exclude / include folder filter with glob patterns and subfolder matching (#5).
+- ✅ Vitest unit-test harness covering the pure settings logic (`test/`, `devbox run test`).

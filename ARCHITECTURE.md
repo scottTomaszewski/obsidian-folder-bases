@@ -69,10 +69,29 @@ So folder `Projects` with the default template resolves to
 
 Stored via `loadData`/`saveData`. The settings tab exposes: filename template,
 click trigger (plain vs modifier), modifier key (Ctrl/Cmd vs Alt/Option),
-create-on-modifier-click toggle, toggle-folder-on-open toggle, and the default
-base YAML.
+create-on-modifier-click toggle, toggle-folder-on-open toggle, the default base
+YAML, and the **folder filter** (mode + patterns + match-subfolders).
+
+### Folder filter
+
+`isFolderEnabled(folderPath, settings)` in `src/settings.ts` is the single
+decision point, called as an early-return guard in both `onClick` and the
+`file-menu` handler. It composes pure helpers — `parsePatterns` (split/trim/
+normalize the pattern list), `globToRegExp` (compile a `*`/`**` glob to an
+anchored regex), and `folderMatchesPatterns` (test the folder, plus its ancestor
+chain when *match subfolders* is on). An empty pattern list is a safe no-op so a
+misconfigured "Only these" can't disable every folder.
 
 ## Discoverability
 
 A `file-menu` handler adds **Open folder base** (when a base exists) or **Create
 folder base** (when it doesn't) to the right-click menu on folders.
+
+## Testing
+
+The pure logic in `src/settings.ts` is unit-tested with Vitest in
+`test/settings.test.ts` (`devbox run test`). Because that module imports
+`"obsidian"`, `vitest.config.ts` aliases the import to `test/obsidian-mock.ts`, a
+minimal stub exposing `normalizePath` and inert UI-class placeholders. Keeping the
+matching/templating helpers pure and exported is what makes them testable without
+the Obsidian runtime; the thin `main.ts` glue is exercised manually in the vault.
