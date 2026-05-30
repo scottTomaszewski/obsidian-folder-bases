@@ -25,6 +25,19 @@ Then enable **Folder Bases** in Settings → Community plugins. To use in anothe
 vault, copy `manifest.json`, `main.js`, and `styles.css` into
 `<vault>/.obsidian/plugins/folder-bases/`.
 
+## Releasing
+
+`devbox run release <version>` bumps the version in `manifest.json`,
+`package.json`, and `versions.json`, builds, commits, pushes, and creates a
+GitHub release with `main.js`, `manifest.json`, and `styles.css` attached:
+
+```bash
+devbox run release 1.0.1   # or: just release 1.0.1
+```
+
+Requires a clean working tree and `gh` authenticated to the repo. Use a plain
+semver version with no leading `v` (Obsidian tags omit it).
+
 ## Documentation
 
 - [Usage & settings](docs/usage.md)

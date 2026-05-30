@@ -27,6 +27,10 @@ runs `npm install` on first entry.
 
 - `devbox run build` — type-check + production bundle to `main.js`
 - `devbox run dev` — esbuild watch mode (rebuild on save)
+- `devbox run release <version>` — bump version (manifest/package/versions.json),
+  build, commit, push, and publish a GitHub release with the assets attached
+  (delegates to the `release` recipe in `justfile`; needs a clean tree and an
+  authenticated `gh`)
 - `devbox run run -- <cmd>` — run an arbitrary command in the env (e.g. `devbox run run -- node -v`)
 
 After building, reload the plugin in Obsidian (toggle off/on in
