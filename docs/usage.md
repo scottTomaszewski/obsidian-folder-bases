@@ -37,6 +37,8 @@ The filename is configurable (see Settings).
 | **Click trigger** | *Plain click* opens the base on a normal click. *Modifier + click* requires holding the modifier key (normal click still expands/collapses). |
 | **Modifier key** | Ctrl/Cmd or Alt/Option. Used both for the modifier trigger and for creating a base on click. |
 | **Create base on modifier + click** | When a folder has no base, a modifier + click creates one from the default template and opens it. |
+| **Auto-create base for new folders** | Off by default. When on, creating a new folder generates its base from the template automatically (the base isn't opened). Respects the folder filter. |
+| **Minimum notes to auto-create** | Only auto-create when the new folder already holds at least this many notes (shown when auto-create is on). `0` creates a base for every new folder. |
 | **Toggle folder when opening** | When a plain click opens a base, also expand/collapse the folder as usual. Off by default (folder stays put). |
 | **Open base in** | Where a base opens: *Current tab* (default), *New tab*, *Split right*, or *Reuse existing tab* (focuses an already-open tab if there is one). Applies to clicks, commands, and the right-click menu. Middle-clicking a folder always opens in a new tab. |
 | **Folder base indicator** | How folders that have a base are marked in the file explorer: *None*, *Italic* (default), *Bold*, *Accent color*, *Dot*, or *Icon*. The mark shows at all times — not just after you click — and respects the folder filter (excluded folders are never marked). |
@@ -76,6 +78,20 @@ typo in the path never blocks creation.
 > Bases filter syntax, so it won't render as a normal base. Keep it somewhere out
 > of the way (e.g. a `Templates/` folder you've added to the folder filter's
 > *Exclude* list).
+
+### Auto-create for new folders
+
+Turn on **Auto-create base for new folders** to have every new folder get a base
+from the template the moment you create it — no click required. The base is
+created but *not* opened, so it stays out of your way.
+
+To avoid littering throwaway folders with bases, set **Minimum notes to
+auto-create** to the number of notes a folder must already contain before a base
+is generated (`0` always creates one). Because Obsidian often creates a folder
+just before dropping files into it (drag-and-drop, import, sync), the check is
+deferred briefly so those notes are counted. Only notes directly inside the
+folder count, and the folder filter still applies — excluded folders are never
+auto-created.
 
 ## Right-click menu
 

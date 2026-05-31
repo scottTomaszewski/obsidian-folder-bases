@@ -63,6 +63,11 @@ export default class FolderBasesPlugin extends Plugin {
 	/** Re-mark from the existing set (DOM re-rendered; vault unchanged). */
 	private reapplyIndicators!: Debouncer<[], void>;
 
+	/** Newly created folder paths awaiting an auto-create check. */
+	private pendingAutoCreate = new Set<string>();
+	/** Process queued new folders once their contents have settled. */
+	private autoCreateBases!: Debouncer<[], void>;
+
 	async onload(): Promise<void> {
 		await this.loadSettings();
 		this.addSettingTab(new FolderBasesSettingTab(this.app, this));
@@ -72,10 +77,19 @@ export default class FolderBasesPlugin extends Plugin {
 			this.applyIndicators();
 		}, 150);
 		this.reapplyIndicators = debounce(() => this.applyIndicators(), 50);
+		// Debounced so a folder created together with its notes (import, sync,
+		// drag-drop) is counted after the files land, not while it's still empty.
+		this.autoCreateBases = debounce(
+			() => void this.processPendingAutoCreate(),
+			400,
+		);
 
 		// Mark folders once the explorer DOM and vault are ready, then keep them
 		// in sync with vault and layout changes.
-		this.app.workspace.onLayoutReady(() => this.installIndicators());
+		this.app.workspace.onLayoutReady(() => {
+			this.installIndicators();
+			this.installAutoCreate();
+		});
 		this.register(() => this.teardownIndicators());
 
 		// Capture phase so we run before the file explorer's own collapse/expand
@@ -457,6 +471,28 @@ export default class FolderBasesPlugin extends Plugin {
 		return this.settings.defaultBaseTemplate;
 	}
 
+	/**
+	 * Write a folder's base from the resolved template (no opening). Returns the
+	 * created file, or null when creation fails (surfaced via `Notice`). Callers
+	 * must check for an existing base first.
+	 */
+	private async createBaseFile(folder: TFolder): Promise<TFile | null> {
+		const basePath = this.basePathForFolder(folder);
+		const content = renderTemplate(
+			await this.resolveTemplate(),
+			folder.name || folder.path,
+			folder.path,
+		);
+		try {
+			const created = await this.app.vault.create(basePath, content);
+			return created instanceof TFile ? created : null;
+		} catch (err) {
+			new Notice(`Folder Bases: could not create ${basePath}`);
+			console.error("Folder Bases: failed to create base", basePath, err);
+			return null;
+		}
+	}
+
 	private async createAndOpenBase(folder: TFolder): Promise<void> {
 		const basePath = this.basePathForFolder(folder);
 		const existing = this.app.vault.getAbstractFileByPath(basePath);
@@ -465,21 +501,61 @@ export default class FolderBasesPlugin extends Plugin {
 			return;
 		}
 
-		const content = renderTemplate(
-			await this.resolveTemplate(),
-			folder.name || folder.path,
-			folder.path,
-		);
-		try {
-			const created = await this.app.vault.create(basePath, content);
-			if (created instanceof TFile) {
-				new Notice(`Created base: ${basePath}`);
-				await this.openBase(created);
-			}
-		} catch (err) {
-			new Notice(`Folder Bases: could not create ${basePath}`);
-			console.error("Folder Bases: failed to create base", basePath, err);
+		const created = await this.createBaseFile(folder);
+		if (created) {
+			new Notice(`Created base: ${basePath}`);
+			await this.openBase(created);
 		}
+	}
+
+	// --- Auto-create a base for newly created folders --------------------
+
+	/**
+	 * Listen for folder creation. Registered from `onLayoutReady` (not `onload`)
+	 * so the create events Obsidian fires for existing folders during startup
+	 * don't trigger a flood of auto-creations.
+	 */
+	private installAutoCreate(): void {
+		this.registerEvent(
+			this.app.vault.on("create", (file) => {
+				if (file instanceof TFolder) this.queueAutoCreate(file);
+			}),
+		);
+	}
+
+	private queueAutoCreate(folder: TFolder): void {
+		if (!this.settings.autoCreateOnNewFolder) return;
+		this.pendingAutoCreate.add(folder.path);
+		this.autoCreateBases();
+	}
+
+	/** Drain the queue, re-resolving each path (folders may have since moved). */
+	private async processPendingAutoCreate(): Promise<void> {
+		const paths = [...this.pendingAutoCreate];
+		this.pendingAutoCreate.clear();
+		for (const path of paths) {
+			const folder = this.app.vault.getAbstractFileByPath(path);
+			if (folder instanceof TFolder) await this.maybeAutoCreateBase(folder);
+		}
+	}
+
+	/** Create a base for a new folder when the setting + guards allow it. */
+	private async maybeAutoCreateBase(folder: TFolder): Promise<void> {
+		if (!this.settings.autoCreateOnNewFolder) return;
+		if (!isFolderEnabled(folder.path, this.settings)) return;
+		const basePath = this.basePathForFolder(folder);
+		if (this.app.vault.getAbstractFileByPath(basePath)) return;
+		if (this.noteCount(folder) < this.settings.autoCreateMinNotes) return;
+
+		const created = await this.createBaseFile(folder);
+		if (created) new Notice(`Created folder base: ${basePath}`);
+	}
+
+	/** Number of markdown notes directly inside a folder (immediate children). */
+	private noteCount(folder: TFolder): number {
+		return folder.children.filter(
+			(child) => child instanceof TFile && child.extension === "md",
+		).length;
 	}
 
 	async loadSettings(): Promise<void> {

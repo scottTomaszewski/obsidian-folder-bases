@@ -66,11 +66,19 @@ Setting for how the base opens: current tab (default), new tab, split right, or
   reuse existing tab) applied to every open path, plus middle-click → new tab.
   See `openLocation` / `paneArgForOpenLocation` in `src/settings.ts`.
 
-### 7. Auto-create a base for newly created folders 🔲
+### 7. Auto-create a base for newly created folders ✅
 Optional: when a new folder is created, generate its base from the template
 automatically. Pair with an "only for folders with ≥N notes" guard to avoid noise.
 - **Why:** zero-friction adoption; every folder becomes a dashboard.
 - **Effort:** S–M · **Touches:** `main.ts`, `settings.ts`
+- **Shipped:** an **Auto-create base for new folders** toggle (off by default)
+  plus a **Minimum notes to auto-create** threshold. A `vault.on("create")`
+  handler registered from `onLayoutReady` (so startup's create flood is ignored)
+  queues new folders into a debounced `processPendingAutoCreate` — the 400 ms
+  delay lets a folder created alongside its notes settle before the note count is
+  checked. `maybeAutoCreateBase` guards on the setting, the folder filter, no
+  existing base, and `noteCount >= autoCreateMinNotes`, then writes the base via
+  the shared `createBaseFile` without opening it. See `src/main.ts`.
 
 ### 8. Template file reference ✅
 Let the default content point to a template `.base` (or per-folder-type
@@ -134,4 +142,6 @@ base"), for when the base lives elsewhere or has a custom name.
   tab) plus middle-click → new tab (#6).
 - ✅ Template file reference: generate new bases from a referenced `.base`
   template file (token-substituted) instead of only the inline content (#8).
+- ✅ Auto-create a base for newly created folders, with an optional minimum-notes
+  threshold to avoid noise (#7).
 - ✅ Vitest unit-test harness covering the pure settings logic (`test/`, `devbox run test`).

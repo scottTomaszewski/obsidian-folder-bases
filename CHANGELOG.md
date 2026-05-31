@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Unreleased changes accumulate under **Unreleased**; cutting a release
 (`devbox run release <version>`) renames that section to the new version header.
 
+## Unreleased
+
+### Added
+- **Auto-create a base for new folders**: a new **Auto-create base for new
+  folders** setting (off by default) generates a folder's base from the template
+  the moment the folder is created — no click needed. A **Minimum notes to
+  auto-create** threshold suppresses bases for folders that don't yet hold at
+  least that many notes (0 = always). The folder filter is respected and the new
+  base isn't opened (#7).
+
 ## 1.4.0
 
 ### Added

@@ -31,6 +31,13 @@ export interface FolderBasesSettings {
 	modifierKey: ModifierKey;
 	/** When no base exists, a modifier+click creates one from the template. */
 	createOnModifierClick: boolean;
+	/** When a new folder is created, auto-generate its base from the template. */
+	autoCreateOnNewFolder: boolean;
+	/**
+	 * Only auto-create when the new folder already holds at least this many notes
+	 * (immediate `.md` children). 0 means create for every new folder.
+	 */
+	autoCreateMinNotes: number;
 	/** When a plain click opens a base, also let the folder expand/collapse. */
 	collapseOnOpen: boolean;
 	/** Whether new bases use the inline content or a referenced template file. */
@@ -68,6 +75,8 @@ export const DEFAULT_SETTINGS: FolderBasesSettings = {
 	clickTrigger: "click",
 	modifierKey: "ctrl",
 	createOnModifierClick: true,
+	autoCreateOnNewFolder: false,
+	autoCreateMinNotes: 0,
 	collapseOnOpen: false,
 	templateSource: "inline",
 	templateFile: "",
@@ -280,6 +289,42 @@ export class FolderBasesSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					}),
 			);
+
+		new Setting(containerEl)
+			.setName("Auto-create base for new folders")
+			.setDesc(
+				"When you create a new folder, generate its base from the template automatically (it isn't opened). Respects the folder filter.",
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.autoCreateOnNewFolder)
+					.onChange(async (value) => {
+						this.plugin.settings.autoCreateOnNewFolder = value;
+						await this.plugin.saveSettings();
+						// Re-render so the threshold control shows/hides.
+						this.display();
+					}),
+			);
+
+		if (this.plugin.settings.autoCreateOnNewFolder) {
+			new Setting(containerEl)
+				.setName("Minimum notes to auto-create")
+				.setDesc(
+					"Only auto-create when the new folder already holds at least this many notes. 0 creates a base for every new folder.",
+				)
+				.addText((text) => {
+					text.setValue(
+						String(this.plugin.settings.autoCreateMinNotes),
+					).onChange(async (value) => {
+						const n = Number.parseInt(value, 10);
+						this.plugin.settings.autoCreateMinNotes =
+							Number.isFinite(n) && n > 0 ? n : 0;
+						await this.plugin.saveSettings();
+					});
+					text.inputEl.type = "number";
+					text.inputEl.min = "0";
+				});
+		}
 
 		new Setting(containerEl)
 			.setName("Toggle folder when opening")

@@ -73,15 +73,40 @@ So folder `Projects` with the default template resolves to
   `setActiveLeaf(..., { focus: true })` + `revealLeaf`, otherwise it falls back to
   a new tab. When a click opens an existing base, `onClick` also tags that title
   element with the `has-folder-base` CSS class (a styling hook).
-- `createAndOpenBase(folder)` → resolves the template via `resolveTemplate()`,
-  renders its tokens, writes it with `app.vault.create`, shows a `Notice`, and
-  opens it. Failures are caught and surfaced via `Notice` + `console.error`.
+- `createBaseFile(folder)` resolves the template via `resolveTemplate()`, renders
+  its tokens, and writes the file with `app.vault.create` (no opening), returning
+  the `TFile` or `null`. Failures are caught and surfaced via `Notice` +
+  `console.error`.
+- `createAndOpenBase(folder)` short-circuits to `openBase` if a base already
+  exists, otherwise calls `createBaseFile`, shows a "Created base" `Notice`, and
+  opens the result.
 - `resolveTemplate()` picks the template string: when the **New base content
   from** setting is *Template file* and `templateFilePath(settings)` (a pure
   helper in `src/settings.ts`) yields a path that resolves to a `TFile`, it
   returns that file's `cachedRead` content; otherwise (inline source, empty path,
   or a missing file — the last with a `Notice`) it falls back to
   `defaultBaseTemplate` (a valid Bases YAML document; see `docs/bases-format.md`).
+
+### Auto-create for new folders
+
+When **Auto-create base for new folders** is on, a folder created in the vault
+gets a base from the template automatically (without opening it).
+
+- `installAutoCreate()` runs from `workspace.onLayoutReady` — *not* `onload` — so
+  the `create` events Obsidian fires for existing folders during startup don't
+  trigger a flood of auto-creations. It registers one `vault.on("create")`
+  handler that queues `TFolder` creations via `queueAutoCreate`.
+- Queueing collects folder paths into `pendingAutoCreate` and kicks the
+  `autoCreateBases` debouncer (400 ms). The delay lets a folder created together
+  with its notes (drag-drop, import, sync) settle so the note count is accurate
+  rather than 0.
+- `processPendingAutoCreate()` drains the set, re-resolving each path (a queued
+  folder may have been deleted or moved) and calling `maybeAutoCreateBase`.
+- `maybeAutoCreateBase(folder)` is the guard stack: setting on, `isFolderEnabled`,
+  no existing base, and `noteCount(folder) >= autoCreateMinNotes` (immediate `.md`
+  children). It then calls `createBaseFile` and shows a "Created folder base"
+  `Notice`. Creating the base file emits a `create` event for a `TFile`, which the
+  folder-only queue ignores (no recursion).
 
 ## Commands
 
@@ -107,7 +132,8 @@ rules), each a `checkCallback` that only activates when applicable:
 
 Stored via `loadData`/`saveData`. The settings tab exposes: filename template,
 click trigger (plain vs modifier), modifier key (Ctrl/Cmd vs Alt/Option),
-create-on-modifier-click toggle, toggle-folder-on-open toggle, **open location**
+create-on-modifier-click toggle, **auto-create for new folders** (plus its
+minimum-notes threshold), toggle-folder-on-open toggle, **open location**
 (current tab / new tab / split right / reuse existing tab), the **new base
 content source** (inline YAML vs a referenced template file path), and the
 **folder filter** (mode + patterns + match-subfolders).
