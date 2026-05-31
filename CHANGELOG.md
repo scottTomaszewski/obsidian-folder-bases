@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Unreleased changes accumulate under **Unreleased**; cutting a release
 (`devbox run release <version>`) renames that section to the new version header.
 
-## Unreleased
+## 1.4.0
 
 ### Added
 - **Template file reference**: a new **New base content from** setting lets new
