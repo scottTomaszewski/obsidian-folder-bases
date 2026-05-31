@@ -29,8 +29,16 @@ declare module "obsidian" {
 		showInFolder(path: string): void;
 		/** Open a vault file with the OS default app (desktop only). */
 		openWithDefaultApp(path: string): void;
+		/** Registry of core ("internal") plugins, keyed by id. */
+		internalPlugins: {
+			getEnabledPluginById?(id: string): unknown | null;
+			plugins?: Record<string, { enabled?: boolean } | undefined>;
+		};
 	}
 }
+
+/** Id of the core plugin that owns and renders the `.base` extension. */
+const BASES_PLUGIN_ID = "bases";
 
 /** Minimal shape of the core file-explorer view that we rely on. */
 interface FileExplorerView extends View {
@@ -67,6 +75,9 @@ export default class FolderBasesPlugin extends Plugin {
 	private pendingAutoCreate = new Set<string>();
 	/** Process queued new folders once their contents have settled. */
 	private autoCreateBases!: Debouncer<[], void>;
+
+	/** True once we've warned that the core Bases plugin is unavailable. */
+	private warnedBasesUnavailable = false;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
@@ -322,7 +333,44 @@ export default class FolderBasesPlugin extends Plugin {
 		}
 	}
 
+	// --- Core Bases plugin availability ---------------------------------
+
+	/**
+	 * Whether the core Bases plugin (which owns the `.base` extension and renders
+	 * it) is enabled. Opening or creating a base without it just yields a file
+	 * that won't render, so callers guard on this. Reads runtime-only internals,
+	 * tolerating older shapes where `getEnabledPluginById` is absent.
+	 */
+	private basesAvailable(): boolean {
+		const internal = this.app.internalPlugins;
+		if (typeof internal?.getEnabledPluginById === "function") {
+			return internal.getEnabledPluginById(BASES_PLUGIN_ID) != null;
+		}
+		return internal?.plugins?.[BASES_PLUGIN_ID]?.enabled === true;
+	}
+
+	/**
+	 * Guard for the open/create paths: returns true when Bases is available,
+	 * otherwise shows a one-time actionable Notice and returns false. Once the
+	 * user enables Bases the check passes and nothing is shown.
+	 */
+	private ensureBasesAvailable(): boolean {
+		if (this.basesAvailable()) {
+			this.warnedBasesUnavailable = false;
+			return true;
+		}
+		if (!this.warnedBasesUnavailable) {
+			this.warnedBasesUnavailable = true;
+			new Notice(
+				"Folder Bases: the core Bases plugin is disabled, so bases won't open. Enable it in Settings → Core plugins.",
+				10000,
+			);
+		}
+		return false;
+	}
+
 	private async openBase(file: TFile, location?: OpenLocation): Promise<void> {
+		if (!this.ensureBasesAvailable()) return;
 		const loc = location ?? this.settings.openLocation;
 
 		if (loc === "reuse") {
@@ -494,6 +542,7 @@ export default class FolderBasesPlugin extends Plugin {
 	}
 
 	private async createAndOpenBase(folder: TFolder): Promise<void> {
+		if (!this.ensureBasesAvailable()) return;
 		const basePath = this.basePathForFolder(folder);
 		const existing = this.app.vault.getAbstractFileByPath(basePath);
 		if (existing instanceof TFile) {
@@ -542,6 +591,9 @@ export default class FolderBasesPlugin extends Plugin {
 	/** Create a base for a new folder when the setting + guards allow it. */
 	private async maybeAutoCreateBase(folder: TFolder): Promise<void> {
 		if (!this.settings.autoCreateOnNewFolder) return;
+		// Don't litter the vault with bases that can't render. Silent here since
+		// auto-create is unprompted background work; the open/create paths warn.
+		if (!this.basesAvailable()) return;
 		if (!isFolderEnabled(folder.path, this.settings)) return;
 		const basePath = this.basePathForFolder(folder);
 		if (this.app.vault.getAbstractFileByPath(basePath)) return;

@@ -92,11 +92,18 @@ templates) instead of one inline YAML string.
   pure, unit-tested `templateFilePath` helper in `src/settings.ts`. Per-folder-
   type templates remain future work (overlaps with #10's per-folder override).
 
-### 9. Graceful handling when Bases is unavailable 🔲
+### 9. Graceful handling when Bases is unavailable ✅
 Detect that the `bases` core plugin is enabled and the app meets `minAppVersion`;
 if not, show a clear one-time `Notice` instead of opening a file that won't render.
 - **Why:** turns a confusing dead-end into an actionable message.
 - **Effort:** S · **Touches:** `main.ts`
+- **Shipped:** `basesAvailable()` checks the core `bases` internal plugin via
+  `app.internalPlugins`. `ensureBasesAvailable()` guards the open/create paths
+  (`openBase`, `createAndOpenBase`), showing a one-time "Enable it in Settings →
+  Core plugins" `Notice` and aborting; the flag resets once Bases is enabled so
+  the warning can fire again later. Auto-create skips silently. `minAppVersion`
+  isn't re-checked in code — Obsidian already refuses to load the plugin below
+  it. See `src/main.ts`.
 
 ### 10. Per-folder override of which base to open 🔲
 Allow a folder to point at a non-default base (e.g. context menu → "Set as folder
@@ -144,4 +151,6 @@ base"), for when the base lives elsewhere or has a custom name.
   template file (token-substituted) instead of only the inline content (#8).
 - ✅ Auto-create a base for newly created folders, with an optional minimum-notes
   threshold to avoid noise (#7).
+- ✅ Graceful one-time `Notice` when the core Bases plugin is disabled, instead of
+  opening a base that won't render (#9).
 - ✅ Vitest unit-test harness covering the pure settings logic (`test/`, `devbox run test`).

@@ -15,6 +15,11 @@ This repo lives inside the demo vault at
 To install into another vault, copy `manifest.json`, `main.js`, and `styles.css`
 into `<vault>/.obsidian/plugins/folder-bases/`.
 
+> **Requires the core Bases plugin.** Folder Bases just opens `.base` files;
+> Obsidian's built-in **Bases** core plugin is what renders them. If it's
+> disabled, opening or creating a folder base shows a one-time notice prompting
+> you to enable it in **Settings → Core plugins**.
+
 ## How it works
 
 Each folder can have an associated base file. By default that's a `.base` file

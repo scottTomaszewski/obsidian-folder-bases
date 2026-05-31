@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Unreleased changes accumulate under **Unreleased**; cutting a release
 (`devbox run release <version>`) renames that section to the new version header.
 
+## Unreleased
+
+### Added
+- **Graceful handling when Bases is unavailable**: if the core Bases plugin is
+  disabled, opening or creating a folder base now shows a clear one-time
+  `Notice` ("Enable it in Settings → Core plugins") instead of opening a `.base`
+  file that won't render. Auto-create silently skips while Bases is disabled, and
+  the warning clears itself once Bases is enabled again (#9).
+
 ## 1.5.0
 
 ### Added
