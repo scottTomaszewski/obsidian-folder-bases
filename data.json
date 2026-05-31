@@ -4,9 +4,12 @@
   "modifierKey": "ctrl",
   "createOnModifierClick": true,
   "collapseOnOpen": false,
+  "templateSource": "file",
+  "templateFile": "default-folder-base.base",
   "defaultBaseTemplate": "  filters:\n    and:\n      - file.inFolder(\"{{folder_path}}\")\n      - file.ext == \"md\"\n  views:\n    - type: table\n      name: Table\n",
   "folderFilterMode": "all",
   "folderPatterns": "",
   "matchSubfolders": true,
-  "openLocation": "tab"
+  "openLocation": "tab",
+  "indicatorStyle": "italic"
 }

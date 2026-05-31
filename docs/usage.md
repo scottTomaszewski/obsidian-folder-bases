@@ -40,7 +40,9 @@ The filename is configurable (see Settings).
 | **Toggle folder when opening** | When a plain click opens a base, also expand/collapse the folder as usual. Off by default (folder stays put). |
 | **Open base in** | Where a base opens: *Current tab* (default), *New tab*, *Split right*, or *Reuse existing tab* (focuses an already-open tab if there is one). Applies to clicks, commands, and the right-click menu. Middle-clicking a folder always opens in a new tab. |
 | **Folder base indicator** | How folders that have a base are marked in the file explorer: *None*, *Italic* (default), *Bold*, *Accent color*, *Dot*, or *Icon*. The mark shows at all times — not just after you click — and respects the folder filter (excluded folders are never marked). |
-| **Default base content** | YAML written into newly created `.base` files. Tokens: `{{folder_name}}`, `{{folder_path}}`. |
+| **New base content from** | Where a newly created base gets its content: *Inline content* (the YAML in **Default base content**, the default) or *Template file* (a `.base` file in your vault). |
+| **Template file** | Vault-relative path to the `.base` template (shown when the source is *Template file*). Tokens `{{folder_name}}`, `{{folder_path}}` are still substituted; if the file is missing, the inline content is used instead. |
+| **Default base content** | YAML written into newly created `.base` files (shown when the source is *Inline content*). Tokens: `{{folder_name}}`, `{{folder_path}}`. |
 | **Folder filter** | Which folders respond to clicks: *All folders* (default), *Exclude these folders*, or *Only these folders*. |
 | **Folder patterns** | One folder path per line (shown when the filter isn't *All folders*). `*` is a wildcard, e.g. `*/drafts`. Matching is case-sensitive. |
 | **Match subfolders** | When on, a pattern also matches folders nested inside it (e.g. `Archive` covers `Archive/2024`). |
@@ -57,6 +59,23 @@ settings — so you never lose normal folder navigation.
   subfolders) opens a base; all other folders are untouched.
 - An empty pattern list is treated as "no filter" — every folder stays active, so
   you can't accidentally lock yourself out.
+
+### Template files
+
+By default, new bases are created from the inline **Default base content** YAML.
+If you'd rather keep your template as a real file — to edit it with Bases' own
+editor, or to reuse it across vaults — set **New base content from** to *Template
+file* and point **Template file** at a `.base` file (e.g. `Templates/Folder.base`).
+
+When a base is created, that file's content is read and the same
+`{{folder_name}}` / `{{folder_path}}` tokens are substituted. If the file can't be
+found, the plugin falls back to the inline content (and shows a notice), so a
+typo in the path never blocks creation.
+
+> Tip: the template file itself contains `{{...}}` tokens, which aren't valid
+> Bases filter syntax, so it won't render as a normal base. Keep it somewhere out
+> of the way (e.g. a `Templates/` folder you've added to the folder filter's
+> *Exclude* list).
 
 ## Right-click menu
 

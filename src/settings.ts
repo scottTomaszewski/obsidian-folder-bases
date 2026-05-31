@@ -13,6 +13,9 @@ export type FolderFilterMode = "all" | "exclude" | "include";
 /** Where a base opens: current tab, a new tab, a right split, or an existing tab. */
 export type OpenLocation = "tab" | "new-tab" | "split" | "reuse";
 
+/** Where new-base content comes from: an inline YAML string or a vault file. */
+export type TemplateSource = "inline" | "file";
+
 /** How folders with a base are marked in the file explorer ("none" = no marker). */
 export type IndicatorStyle = "none" | "italic" | "bold" | "accent" | "dot" | "icon";
 
@@ -30,6 +33,13 @@ export interface FolderBasesSettings {
 	createOnModifierClick: boolean;
 	/** When a plain click opens a base, also let the folder expand/collapse. */
 	collapseOnOpen: boolean;
+	/** Whether new bases use the inline content or a referenced template file. */
+	templateSource: TemplateSource;
+	/**
+	 * Vault-relative path to a template file, used when `templateSource` is
+	 * "file". Its content is read and token-substituted into the new base.
+	 */
+	templateFile: string;
 	/** YAML written into newly created .base files. Supports the same tokens. */
 	defaultBaseTemplate: string;
 	/** Which folders the plugin acts on: all, all-but-listed, or only-listed. */
@@ -59,6 +69,8 @@ export const DEFAULT_SETTINGS: FolderBasesSettings = {
 	modifierKey: "ctrl",
 	createOnModifierClick: true,
 	collapseOnOpen: false,
+	templateSource: "inline",
+	templateFile: "",
 	defaultBaseTemplate: DEFAULT_BASE_TEMPLATE,
 	folderFilterMode: "all",
 	folderPatterns: "",
@@ -94,6 +106,17 @@ export function renderTemplate(
 	return template
 		.replace(/\{\{\s*folder_name\s*\}\}/g, folderName)
 		.replace(/\{\{\s*folder_path\s*\}\}/g, folderPath);
+}
+
+/**
+ * The vault-relative template-file path to read new-base content from, or null
+ * when the inline content should be used instead (inline source, or no path
+ * set). Pure so the source decision is unit-testable without the vault.
+ */
+export function templateFilePath(settings: FolderBasesSettings): string | null {
+	if (settings.templateSource !== "file") return null;
+	const trimmed = settings.templateFile.trim();
+	return trimmed ? normalizePath(trimmed) : null;
 }
 
 /**
@@ -312,21 +335,57 @@ export class FolderBasesSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Default base content")
+			.setName("New base content from")
 			.setDesc(
-				"YAML written into newly created .base files. Tokens: {{folder_name}}, {{folder_path}}.",
+				"Where a newly created base gets its content: the inline YAML below, or a template file in your vault.",
 			)
-			.addTextArea((area) => {
-				area
-					.setValue(this.plugin.settings.defaultBaseTemplate)
+			.addDropdown((dd) =>
+				dd
+					.addOption("inline", "Inline content")
+					.addOption("file", "Template file")
+					.setValue(this.plugin.settings.templateSource)
 					.onChange(async (value) => {
-						this.plugin.settings.defaultBaseTemplate =
-							value || DEFAULT_SETTINGS.defaultBaseTemplate;
+						this.plugin.settings.templateSource =
+							value as TemplateSource;
 						await this.plugin.saveSettings();
-					});
-				area.inputEl.rows = 8;
-				area.inputEl.addClass("folder-bases-template-input");
-			});
+						// Re-render so the inline/file control swaps in.
+						this.display();
+					}),
+			);
+
+		if (this.plugin.settings.templateSource === "file") {
+			new Setting(containerEl)
+				.setName("Template file")
+				.setDesc(
+					"Vault-relative path to a .base file used as the template. Tokens {{folder_name}}, {{folder_path}} are still substituted. If the file is missing, the inline content is used instead.",
+				)
+				.addText((text) =>
+					text
+						.setPlaceholder("Templates/Folder.base")
+						.setValue(this.plugin.settings.templateFile)
+						.onChange(async (value) => {
+							this.plugin.settings.templateFile = value.trim();
+							await this.plugin.saveSettings();
+						}),
+				);
+		} else {
+			new Setting(containerEl)
+				.setName("Default base content")
+				.setDesc(
+					"YAML written into newly created .base files. Tokens: {{folder_name}}, {{folder_path}}.",
+				)
+				.addTextArea((area) => {
+					area
+						.setValue(this.plugin.settings.defaultBaseTemplate)
+						.onChange(async (value) => {
+							this.plugin.settings.defaultBaseTemplate =
+								value || DEFAULT_SETTINGS.defaultBaseTemplate;
+							await this.plugin.saveSettings();
+						});
+					area.inputEl.rows = 8;
+					area.inputEl.addClass("folder-bases-template-input");
+				});
+		}
 
 		new Setting(containerEl)
 			.setName("Folder filter")

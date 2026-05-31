@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Unreleased changes accumulate under **Unreleased**; cutting a release
 (`devbox run release <version>`) renames that section to the new version header.
 
+## Unreleased
+
+### Added
+- **Template file reference**: a new **New base content from** setting lets new
+  bases be generated from a `.base` template file in your vault (set its path in
+  **Template file**) instead of the inline YAML. The `{{folder_name}}` /
+  `{{folder_path}}` tokens are still substituted, and if the referenced file is
+  missing the inline content is used as a fallback (#8).
+
 ## 1.3.0
 
 ### Added

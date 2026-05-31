@@ -73,10 +73,15 @@ So folder `Projects` with the default template resolves to
   `setActiveLeaf(..., { focus: true })` + `revealLeaf`, otherwise it falls back to
   a new tab. When a click opens an existing base, `onClick` also tags that title
   element with the `has-folder-base` CSS class (a styling hook).
-- `createAndOpenBase(folder)` → renders `defaultBaseTemplate` (a valid Bases YAML
-  document; see `docs/bases-format.md`), writes it with `app.vault.create`, shows
-  a `Notice`, and opens it. Failures are caught and surfaced via `Notice` +
-  `console.error`.
+- `createAndOpenBase(folder)` → resolves the template via `resolveTemplate()`,
+  renders its tokens, writes it with `app.vault.create`, shows a `Notice`, and
+  opens it. Failures are caught and surfaced via `Notice` + `console.error`.
+- `resolveTemplate()` picks the template string: when the **New base content
+  from** setting is *Template file* and `templateFilePath(settings)` (a pure
+  helper in `src/settings.ts`) yields a path that resolves to a `TFile`, it
+  returns that file's `cachedRead` content; otherwise (inline source, empty path,
+  or a missing file — the last with a `Notice`) it falls back to
+  `defaultBaseTemplate` (a valid Bases YAML document; see `docs/bases-format.md`).
 
 ## Commands
 
@@ -103,8 +108,9 @@ rules), each a `checkCallback` that only activates when applicable:
 Stored via `loadData`/`saveData`. The settings tab exposes: filename template,
 click trigger (plain vs modifier), modifier key (Ctrl/Cmd vs Alt/Option),
 create-on-modifier-click toggle, toggle-folder-on-open toggle, **open location**
-(current tab / new tab / split right / reuse existing tab), the default base
-YAML, and the **folder filter** (mode + patterns + match-subfolders).
+(current tab / new tab / split right / reuse existing tab), the **new base
+content source** (inline YAML vs a referenced template file path), and the
+**folder filter** (mode + patterns + match-subfolders).
 
 ### Folder filter
 

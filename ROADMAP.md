@@ -72,11 +72,17 @@ automatically. Pair with an "only for folders with ≥N notes" guard to avoid no
 - **Why:** zero-friction adoption; every folder becomes a dashboard.
 - **Effort:** S–M · **Touches:** `main.ts`, `settings.ts`
 
-### 8. Template file reference 🔲
+### 8. Template file reference ✅
 Let the default content point to a template `.base` (or per-folder-type
 templates) instead of one inline YAML string.
 - **Why:** scales beyond a single global template.
 - **Effort:** M · **Touches:** `settings.ts`, `main.ts`
+- **Shipped:** a **New base content from** setting (inline / template file). In
+  *Template file* mode, `resolveTemplate()` reads the configured `.base` file's
+  content (token-substituted like the inline default) and falls back to the
+  inline content with a `Notice` if the file is missing. The source decision is a
+  pure, unit-tested `templateFilePath` helper in `src/settings.ts`. Per-folder-
+  type templates remain future work (overlaps with #10's per-folder override).
 
 ### 9. Graceful handling when Bases is unavailable 🔲
 Detect that the `bases` core plugin is enabled and the app meets `minAppVersion`;
@@ -126,4 +132,6 @@ base"), for when the base lives elsewhere or has a custom name.
   user-assignable hotkeys and smart active-folder resolution (#4).
 - ✅ Open-location options (current tab / new tab / split right / reuse existing
   tab) plus middle-click → new tab (#6).
+- ✅ Template file reference: generate new bases from a referenced `.base`
+  template file (token-substituted) instead of only the inline content (#8).
 - ✅ Vitest unit-test harness covering the pure settings logic (`test/`, `devbox run test`).

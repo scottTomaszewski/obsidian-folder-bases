@@ -19,6 +19,7 @@ import {
 	OpenLocation,
 	paneArgForOpenLocation,
 	renderTemplate,
+	templateFilePath,
 } from "./settings";
 
 // Typed views of runtime-only Obsidian APIs that aren't in the public types.
@@ -439,6 +440,23 @@ export default class FolderBasesPlugin extends Plugin {
 		}
 	}
 
+	/**
+	 * The template string for a new base: the referenced template file's content
+	 * when one is configured and exists, otherwise the inline default content.
+	 * Tokens are substituted by the caller.
+	 */
+	private async resolveTemplate(): Promise<string> {
+		const path = templateFilePath(this.settings);
+		if (path) {
+			const file = this.app.vault.getAbstractFileByPath(path);
+			if (file instanceof TFile) return this.app.vault.cachedRead(file);
+			new Notice(
+				`Folder Bases: template file not found (${path}); using inline content`,
+			);
+		}
+		return this.settings.defaultBaseTemplate;
+	}
+
 	private async createAndOpenBase(folder: TFolder): Promise<void> {
 		const basePath = this.basePathForFolder(folder);
 		const existing = this.app.vault.getAbstractFileByPath(basePath);
@@ -448,7 +466,7 @@ export default class FolderBasesPlugin extends Plugin {
 		}
 
 		const content = renderTemplate(
-			this.settings.defaultBaseTemplate,
+			await this.resolveTemplate(),
 			folder.name || folder.path,
 			folder.path,
 		);

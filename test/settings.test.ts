@@ -10,6 +10,7 @@ import {
 	paneArgForOpenLocation,
 	parsePatterns,
 	renderTemplate,
+	templateFilePath,
 } from "../src/settings";
 
 /** Build a settings object from the defaults with targeted overrides. */
@@ -47,6 +48,43 @@ describe("renderTemplate", () => {
 		expect(yaml).toContain('file.ext == "md"');
 		// No leftover tokens.
 		expect(yaml).not.toContain("{{");
+	});
+});
+
+describe("templateFilePath", () => {
+	it("returns null for the inline source regardless of the path", () => {
+		expect(
+			templateFilePath(
+				withSettings({
+					templateSource: "inline",
+					templateFile: "Templates/Folder.base",
+				}),
+			),
+		).toBeNull();
+	});
+
+	it("returns the normalized path for the file source", () => {
+		expect(
+			templateFilePath(
+				withSettings({
+					templateSource: "file",
+					templateFile: "/Templates//Folder.base/",
+				}),
+			),
+		).toBe("Templates/Folder.base");
+	});
+
+	it("returns null when the file source has no path set", () => {
+		expect(
+			templateFilePath(
+				withSettings({ templateSource: "file", templateFile: "" }),
+			),
+		).toBeNull();
+		expect(
+			templateFilePath(
+				withSettings({ templateSource: "file", templateFile: "   " }),
+			),
+		).toBeNull();
 	});
 });
 
