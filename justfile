@@ -48,7 +48,7 @@ release version:
 	npm run build
 
 	git add manifest.json package.json versions.json CHANGELOG.md
-	git commit -m "Release $version"
+	git commit --allow-empty -m "Release $version"
 	git push -u origin HEAD
 
 	token="$(just _gh-token)"                                                                                                                                                                                                             

@@ -69,3 +69,4 @@ Unreleased changes accumulate under **Unreleased**; cutting a release
   tokens (default: a same-named `.base` inside the folder).
 - Optionally create a base from a template on modifier + click when none exists.
 - Folder right-click menu: open or create the folder's base.
+
