@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Unreleased changes accumulate under **Unreleased**; cutting a release
 (`devbox run release <version>`) renames that section to the new version header.
 
+## Unreleased
+
+### Added
+- **Indicator color and icon**: the accent/dot/icon indicator styles now take a
+  custom **Indicator color** (a color picker, or a reset button to follow the
+  theme's accent color), and the icon style takes a custom **Indicator icon**
+  (any Lucide icon, with search; defaults to `layout-grid`).
+
 ## 1.6.0
 
 ### Added

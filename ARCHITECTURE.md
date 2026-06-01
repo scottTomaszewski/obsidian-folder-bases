@@ -195,10 +195,15 @@ source of truth is `markedFolders`, a `Set<string>` of folder paths that are bot
 - `applyIndicators()` writes per explorer container: the
   `folder-bases-indicator-<style>` class (selecting the look), the
   `has-folder-base` class on each `.nav-folder-title[data-path]` whose path is in
-  the set, and — when **Hide base file** is on — the `folder-bases-hidden` class
-  (CSS `display:none`) on each `.nav-file-title[data-path]` whose path is in
-  `baseFiles`. The `"none"` style clears the indicator classes. The look is
-  realized entirely in `styles.css` (no per-element style assignment).
+  the set, the `folder-bases-hidden` class (CSS `display:none`) on each
+  `.nav-file-title[data-path]` in `baseFiles` when **Hide base file** is on, and
+  — for the colored/icon styles — the dynamic user choices as CSS custom
+  properties (`--folder-bases-indicator-color`, and `--folder-bases-indicator-icon`,
+  a `mask` URL built from the chosen Lucide icon via `getIcon` + `XMLSerializer`).
+  The `"none"` style clears everything. The look itself lives entirely in
+  `styles.css`; JS only passes runtime values through CSS variables (the accepted
+  alternative to inline styles), so the stylesheet's `var(..., <theme default>)`
+  fallbacks keep theme behavior when no custom value is set.
 - The same rebuild that fills `markedFolders` also fills `baseFiles`, a
   `Set<string>` of those folders' own base paths, so hiding rides the same scan,
   `MutationObserver`, and vault/layout listeners — hidden bases stay hidden across

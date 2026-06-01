@@ -18,6 +18,25 @@ export function normalizePath(path: string): string {
 
 export class App {}
 
+// Inert stubs: the settings tab's `display()` is never called in tests, but
+// `IconSuggest extends AbstractInputSuggest` is evaluated at import time, so the
+// base class and these helpers must exist as named exports.
+export class AbstractInputSuggest<T> {
+	constructor(_app: App, _inputEl: unknown) {
+		void _app;
+		void _inputEl;
+	}
+}
+
+export function getIconIds(): string[] {
+	return [];
+}
+
+export function setIcon(_el: unknown, _iconId: string): void {
+	void _el;
+	void _iconId;
+}
+
 export class PluginSettingTab {
 	app: App;
 	plugin: unknown;

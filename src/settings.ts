@@ -1,5 +1,18 @@
-import { App, PluginSettingTab, Setting, normalizePath, type PaneType } from "obsidian";
+import {
+	AbstractInputSuggest,
+	App,
+	getIconIds,
+	PluginSettingTab,
+	Setting,
+	setIcon,
+	normalizePath,
+	type PaneType,
+} from "obsidian";
 import type FolderBasesPlugin from "./main";
+
+/** Color shown in the picker when no custom color is set (purely cosmetic;
+ * an empty `indicatorColor` means "follow the theme"). */
+const PICKER_PLACEHOLDER_COLOR = "#705dcf";
 
 /** How a folder-title click is mapped to "open the base". */
 export type ClickTrigger = "click" | "modifier";
@@ -61,6 +74,10 @@ export interface FolderBasesSettings {
 	indicatorStyle: IndicatorStyle;
 	/** Hide a folder's own base file from the file explorer for a cleaner look. */
 	hideBaseFile: boolean;
+	/** Indicator color (hex) for the accent/dot/icon styles; "" follows the theme. */
+	indicatorColor: string;
+	/** Lucide icon id used by the "icon" indicator style. */
+	indicatorIcon: string;
 }
 
 export const DEFAULT_BASE_TEMPLATE = `filters:
@@ -89,6 +106,8 @@ export const DEFAULT_SETTINGS: FolderBasesSettings = {
 	openLocation: "tab",
 	indicatorStyle: "italic",
 	hideBaseFile: false,
+	indicatorColor: "",
+	indicatorIcon: "layout-grid",
 };
 
 /**
@@ -217,6 +236,36 @@ export function isFolderEnabled(
 		settings.matchSubfolders,
 	);
 	return settings.folderFilterMode === "exclude" ? !matched : matched;
+}
+
+/** Lucide-icon autocomplete for the "Indicator icon" text field. */
+class IconSuggest extends AbstractInputSuggest<string> {
+	constructor(
+		app: App,
+		private readonly inputEl: HTMLInputElement,
+		private readonly onPick: (value: string) => void,
+	) {
+		super(app, inputEl);
+	}
+
+	getSuggestions(query: string): string[] {
+		const q = query.toLowerCase();
+		return getIconIds()
+			.filter((id) => id.toLowerCase().includes(q))
+			.slice(0, 50);
+	}
+
+	renderSuggestion(id: string, el: HTMLElement): void {
+		el.addClass("folder-bases-icon-suggestion");
+		setIcon(el.createSpan(), id);
+		el.createSpan({ text: id });
+	}
+
+	selectSuggestion(id: string): void {
+		this.inputEl.value = id;
+		this.onPick(id);
+		this.close();
+	}
 }
 
 export class FolderBasesSettingTab extends PluginSettingTab {
@@ -379,8 +428,63 @@ export class FolderBasesSettingTab extends PluginSettingTab {
 						this.plugin.settings.indicatorStyle =
 							value as IndicatorStyle;
 						await this.plugin.saveSettings();
+						// Re-render so the color/icon controls show/hide.
+						this.display();
 					}),
 			);
+
+		const style = this.plugin.settings.indicatorStyle;
+
+		if (style === "accent" || style === "dot" || style === "icon") {
+			new Setting(containerEl)
+				.setName("Indicator color")
+				.setDesc(
+					"Color of the indicator. Reset to follow the theme's accent color.",
+				)
+				.addColorPicker((cp) =>
+					cp
+						.setValue(
+							this.plugin.settings.indicatorColor ||
+								PICKER_PLACEHOLDER_COLOR,
+						)
+						.onChange(async (value) => {
+							this.plugin.settings.indicatorColor = value;
+							await this.plugin.saveSettings();
+						}),
+				)
+				.addExtraButton((btn) =>
+					btn
+						.setIcon("rotate-ccw")
+						.setTooltip("Use theme color")
+						.onClick(async () => {
+							this.plugin.settings.indicatorColor = "";
+							await this.plugin.saveSettings();
+							this.display();
+						}),
+				);
+		}
+
+		if (style === "icon") {
+			new Setting(containerEl)
+				.setName("Indicator icon")
+				.setDesc(
+					"Lucide icon shown after folders that have a base. Start typing to search.",
+				)
+				.addText((text) => {
+					text
+						.setPlaceholder(DEFAULT_SETTINGS.indicatorIcon)
+						.setValue(this.plugin.settings.indicatorIcon)
+						.onChange(async (value) => {
+							this.plugin.settings.indicatorIcon =
+								value.trim() || DEFAULT_SETTINGS.indicatorIcon;
+							await this.plugin.saveSettings();
+						});
+					new IconSuggest(this.app, text.inputEl, (id) => {
+						this.plugin.settings.indicatorIcon = id;
+						void this.plugin.saveSettings();
+					});
+				});
+		}
 
 		new Setting(containerEl)
 			.setName("Hide base file in explorer")
