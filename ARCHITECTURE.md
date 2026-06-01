@@ -10,6 +10,7 @@ of (or in addition to) the default expand/collapse.
 |------|----------------|
 | `src/main.ts` | `FolderBasesPlugin` — lifecycle, click/middle-click interception, base resolution, open/create, commands, folder context menu. |
 | `src/settings.ts` | `FolderBasesSettings` + `DEFAULT_SETTINGS`, the `renderTemplate` token helper, `paneArgForOpenLocation`, and `FolderBasesSettingTab` (the settings UI). |
+| `styles.css` | The indicator look (`folder-bases-indicator-<style>` + `has-folder-base`), the hidden-base rule (`.nav-file-title.folder-bases-hidden`), and the settings template-editor styling. `main.ts` only toggles classes; the appearance lives entirely here. |
 
 There is **no custom Obsidian view**. Obsidian's core *Bases* plugin already
 registers the `.base` file extension and its view. Opening a `.base` `TFile`
@@ -86,6 +87,26 @@ So folder `Projects` with the default template resolves to
   returns that file's `cachedRead` content; otherwise (inline source, empty path,
   or a missing file — the last with a `Notice`) it falls back to
   `defaultBaseTemplate` (a valid Bases YAML document; see `docs/bases-format.md`).
+
+### Core Bases availability guard
+
+The core *Bases* plugin (id `bases`) is what renders a `.base` file; without it,
+opening or creating one just yields a file that won't render. The open/create
+paths guard on this:
+
+- `basesAvailable()` reads runtime-only internals via `app.internalPlugins`,
+  preferring `getEnabledPluginById("bases")` and falling back to
+  `plugins["bases"].enabled` on older shapes (both typed via the local
+  `declare module "obsidian"` augmentation in `main.ts`).
+- `ensureBasesAvailable()` wraps it for the interactive paths (`openBase`,
+  `createAndOpenBase`): when Bases is missing it shows a **one-time** actionable
+  `Notice` ("Enable it in Settings → Core plugins") and returns false to abort.
+  The `warnedBasesUnavailable` flag suppresses repeats; it resets the moment the
+  check passes, so the warning can fire again if Bases is later disabled.
+- **Auto-create skips silently** (`maybeAutoCreateBase` calls `basesAvailable()`
+  directly, not the warning wrapper) — it's unprompted background work, so it
+  shouldn't nag. `minAppVersion` isn't re-checked in code; Obsidian already
+  refuses to load the plugin below it.
 
 ### Auto-create for new folders
 
