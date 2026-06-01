@@ -3,11 +3,18 @@
   "clickTrigger": "click",
   "modifierKey": "ctrl",
   "createOnModifierClick": true,
+  "autoCreateOnNewFolder": false,
+  "autoCreateMinNotes": 0,
   "collapseOnOpen": false,
+  "templateSource": "inline",
+  "templateFile": "",
   "defaultBaseTemplate": "  filters:\n    and:\n      - file.inFolder(\"{{folder_path}}\")\n      - file.ext == \"md\"\n  views:\n    - type: table\n      name: Table\n",
   "folderFilterMode": "all",
   "folderPatterns": "",
   "matchSubfolders": true,
   "openLocation": "tab",
-  "indicatorStyle": "icon"
+  "indicatorStyle": "icon",
+  "hideBaseFile": false,
+  "indicatorColor": "#14b1ff",
+  "indicatorIcon": "layout-grid"
 }
