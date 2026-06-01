@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Unreleased changes accumulate under **Unreleased**; cutting a release
 (`devbox run release <version>`) renames that section to the new version header.
 
-## Unreleased
+## 1.7.0
 
 ### Added
 - **Indicator color and icon**: the accent/dot/icon indicator styles now take a
