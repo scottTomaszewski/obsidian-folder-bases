@@ -9,6 +9,7 @@ import {
 	View,
 	WorkspaceLeaf,
 	debounce,
+	getIcon,
 } from "obsidian";
 import {
 	basePathFor,
@@ -49,6 +50,10 @@ const INDICATOR_CLASS_PREFIX = "folder-bases-indicator-";
 const INDICATOR_CLASSES = ["italic", "bold", "accent", "dot", "icon"].map(
 	(style) => INDICATOR_CLASS_PREFIX + style,
 );
+
+/** CSS custom properties carrying the user's dynamic color / icon choices. */
+const INDICATOR_COLOR_VAR = "--folder-bases-indicator-color";
+const INDICATOR_ICON_VAR = "--folder-bases-indicator-icon";
 
 export default class FolderBasesPlugin extends Plugin {
 	settings!: FolderBasesSettings;
@@ -233,6 +238,8 @@ export default class FolderBasesPlugin extends Plugin {
 		this.explorerObserver = null;
 		for (const container of this.explorerContainers()) {
 			container.removeClasses(INDICATOR_CLASSES);
+			container.style.removeProperty(INDICATOR_COLOR_VAR);
+			container.style.removeProperty(INDICATOR_ICON_VAR);
 			for (const titleEl of this.folderTitlesIn(container)) {
 				titleEl.removeClass(HAS_BASE_CLASS);
 			}
@@ -271,11 +278,23 @@ export default class FolderBasesPlugin extends Plugin {
 	/** Reflect the current set + chosen style onto the explorer DOM. */
 	private applyIndicators(): void {
 		const style = this.settings.indicatorStyle;
+		const colorable =
+			style === "accent" || style === "dot" || style === "icon";
+		const color = colorable ? this.settings.indicatorColor : "";
+		const iconMask =
+			style === "icon"
+				? this.iconMaskValue(this.settings.indicatorIcon)
+				: null;
+
 		for (const container of this.explorerContainers()) {
 			container.removeClasses(INDICATOR_CLASSES);
 			if (style !== "none") {
 				container.addClass(INDICATOR_CLASS_PREFIX + style);
 			}
+			// Pass dynamic user choices to styles.css via CSS custom properties
+			// (the accepted way to feed runtime values into stylesheet rules).
+			this.setCssVar(container, INDICATOR_COLOR_VAR, color);
+			this.setCssVar(container, INDICATOR_ICON_VAR, iconMask);
 			for (const titleEl of this.folderTitlesIn(container)) {
 				const path = titleEl.getAttribute("data-path");
 				const marked =
@@ -305,6 +324,30 @@ export default class FolderBasesPlugin extends Plugin {
 				subtree: true,
 			});
 		}
+	}
+
+	/** Set a CSS custom property, or remove it when the value is empty/null. */
+	private setCssVar(
+		el: HTMLElement,
+		name: string,
+		value: string | null,
+	): void {
+		if (value) el.style.setProperty(name, value);
+		else el.style.removeProperty(name);
+	}
+
+	/**
+	 * A `mask` value (a `url("data:image/svg+xml,...")`) for the chosen Lucide
+	 * icon, so styles.css can paint it in the indicator color. Null if the icon
+	 * (and the default fallback) can't be resolved.
+	 */
+	private iconMaskValue(iconId: string): string | null {
+		const svg = getIcon(iconId) ?? getIcon(DEFAULT_SETTINGS.indicatorIcon);
+		if (!svg) return null;
+		// The mask uses the shape's alpha, so paint it opaque regardless of theme.
+		svg.setAttribute("stroke", "black");
+		const markup = new XMLSerializer().serializeToString(svg);
+		return `url("data:image/svg+xml,${encodeURIComponent(markup)}")`;
 	}
 
 	private async openBase(file: TFile, location?: OpenLocation): Promise<void> {

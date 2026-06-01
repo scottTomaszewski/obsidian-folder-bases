@@ -138,11 +138,17 @@ source of truth is `markedFolders`, a `Set<string>` of folder paths that are bot
     feed back in) re-marks from the existing set as folders collapse/expand or
     scroll. `workspace.on("layout-change")` re-acquires/re-observes containers if
     the pane is reopened, moved, or popped out.
-- `applyIndicators()` writes two things per explorer container: the
-  `folder-bases-indicator-<style>` class (selecting the look), and the
+- `applyIndicators()` writes per explorer container: the
+  `folder-bases-indicator-<style>` class (selecting the look), the
   `has-folder-base` class on each `.nav-folder-title[data-path]` whose path is in
-  the set. The `"none"` style clears both. The style is realized entirely in
-  `styles.css` (no per-element style assignment).
+  the set, and — for the colored/icon styles — the dynamic user choices as CSS
+  custom properties (`--folder-bases-indicator-color`, and
+  `--folder-bases-indicator-icon`, a `mask` URL built from the chosen Lucide icon
+  via `getIcon` + `XMLSerializer`). The `"none"` style clears everything. The
+  look itself lives entirely in `styles.css`; JS only passes runtime values
+  through CSS variables (the accepted alternative to inline styles), so the
+  stylesheet's `var(..., <theme default>)` fallbacks keep theme behavior when no
+  custom value is set.
 - Cleanup is registered with `this.register(...)`: the observer is disconnected
   and the classes stripped on unload.
 

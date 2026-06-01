@@ -8,5 +8,6 @@
   "folderFilterMode": "all",
   "folderPatterns": "",
   "matchSubfolders": true,
-  "openLocation": "tab"
+  "openLocation": "tab",
+  "indicatorStyle": "icon"
 }

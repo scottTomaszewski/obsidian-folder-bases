@@ -17,10 +17,13 @@
 	font-weight: var(--font-bold);
 }
 
+/* `--folder-bases-indicator-color` (set by main.ts when the user picks one)
+   overrides the theme default for the colored styles below. */
+
 .folder-bases-indicator-accent
 	.nav-folder-title.has-folder-base
 	.nav-folder-title-content {
-	color: var(--text-accent);
+	color: var(--folder-bases-indicator-color, var(--text-accent));
 }
 
 .folder-bases-indicator-dot
@@ -32,7 +35,7 @@
 	height: var(--size-2-2);
 	margin-inline-start: var(--size-2-2);
 	border-radius: 50%;
-	background-color: var(--text-accent);
+	background-color: var(--folder-bases-indicator-color, var(--text-accent));
 	vertical-align: middle;
 }
 
@@ -44,12 +47,23 @@
 	width: var(--icon-xs);
 	height: var(--icon-xs);
 	margin-inline-start: var(--size-2-2);
-	background-color: var(--text-muted);
+	background-color: var(--folder-bases-indicator-color, var(--text-muted));
 	vertical-align: middle;
-	/* lucide "layout-grid", recolored via mask so it follows the theme. */
+	/* `--folder-bases-indicator-icon` is the chosen Lucide icon as a mask URL,
+	   set by main.ts; the inline fallback is lucide "layout-grid". The mask
+	   paints the shape in the background-color above so it follows the theme. */
 	--folder-bases-grid-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>');
-	-webkit-mask: var(--folder-bases-grid-icon) center / contain no-repeat;
-	mask: var(--folder-bases-grid-icon) center / contain no-repeat;
+	-webkit-mask: var(--folder-bases-indicator-icon, var(--folder-bases-grid-icon))
+		center / contain no-repeat;
+	mask: var(--folder-bases-indicator-icon, var(--folder-bases-grid-icon)) center /
+		contain no-repeat;
+}
+
+/* Icon-search dropdown rows in settings. */
+.folder-bases-icon-suggestion {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
 }
 
 /* Settings: default base content editor. */

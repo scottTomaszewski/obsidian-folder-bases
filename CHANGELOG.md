@@ -16,8 +16,10 @@ Unreleased changes accumulate under **Unreleased**; cutting a release
   the file explorer at all times (scanned on load, kept in sync with vault
   create/delete/rename, and re-applied as folders collapse/expand). A **Folder
   base indicator** setting chooses the style — none, italic (default), bold,
-  accent color, dot, or icon. Only a folder's own base counts, and excluded
-  folders are never marked (#1).
+  accent color, dot, or icon. The accent/dot/icon styles take a custom
+  **Indicator color** (a color picker, or follow the theme), and the icon style
+  takes a custom **Indicator icon** (any Lucide icon, with search). Only a
+  folder's own base counts, and excluded folders are never marked (#1).
 
 ## 1.2.0
 
