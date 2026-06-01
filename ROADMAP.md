@@ -118,8 +118,11 @@ base"), for when the base lives elsewhere or has a custom name.
 - **Why:** flexibility for users who don't want the same-name convention everywhere.
 - **Effort:** M–L · **Touches:** `main.ts`, `settings.ts`, persisted data
 
-### 11. Better auto-moc base
-The default base should serve as an automated MOC. Namely, it should display nested content adn nested Folder Bases in a usefule way
+### 11. Better auto-MOC base 🔲
+The default base should serve as an automated MOC. Namely, it should display nested
+content and nested Folder Bases in a useful way.
+- **Why:** turns every folder base into a navigable map of content, not just a flat table.
+- **Effort:** M · **Touches:** `settings.ts` (default template), `main.ts`
 
 ## Suggested sequencing
 

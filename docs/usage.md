@@ -6,7 +6,8 @@ explorer — like the *Folder Notes* plugin, but for `.base` files.
 ## Install (from source)
 
 This repo lives inside the demo vault at
-`.obsidian/plugins/folder-bases/`, so no copying is needed.
+`.obsidian/plugins/obsidian-folder-bases/`, so no copying is needed. (Obsidian
+loads it by the manifest `id` — `folder-bases` — not the directory name.)
 
 1. Build it: `devbox run build` (or `devbox run dev` to rebuild on save).
 2. In Obsidian: **Settings → Community plugins → enable "Folder Bases"**.
