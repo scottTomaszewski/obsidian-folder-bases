@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Unreleased changes accumulate under **Unreleased**; cutting a release
 (`devbox run release <version>`) renames that section to the new version header.
 
+## Unreleased
+
+### Added
+- **Hide base file in explorer**: a new **Hide base file in explorer** toggle
+  (off by default) hides a folder's own base file (e.g. `Books/Books.base`) from
+  the file explorer, for a cleaner folder-note look. Clicking the folder still
+  opens it, and the folder filter is respected — only enabled folders' own bases
+  are hidden (#2).
+
 ## 1.5.1
 
 ### Added

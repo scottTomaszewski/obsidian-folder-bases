@@ -134,9 +134,10 @@ Stored via `loadData`/`saveData`. The settings tab exposes: filename template,
 click trigger (plain vs modifier), modifier key (Ctrl/Cmd vs Alt/Option),
 create-on-modifier-click toggle, **auto-create for new folders** (plus its
 minimum-notes threshold), toggle-folder-on-open toggle, **open location**
-(current tab / new tab / split right / reuse existing tab), the **new base
-content source** (inline YAML vs a referenced template file path), and the
-**folder filter** (mode + patterns + match-subfolders).
+(current tab / new tab / split right / reuse existing tab), the **folder base
+indicator** style, the **hide base file** toggle, the **new base content source**
+(inline YAML vs a referenced template file path), and the **folder filter** (mode
++ patterns + match-subfolders).
 
 ### Folder filter
 
@@ -170,11 +171,18 @@ source of truth is `markedFolders`, a `Set<string>` of folder paths that are bot
     feed back in) re-marks from the existing set as folders collapse/expand or
     scroll. `workspace.on("layout-change")` re-acquires/re-observes containers if
     the pane is reopened, moved, or popped out.
-- `applyIndicators()` writes two things per explorer container: the
-  `folder-bases-indicator-<style>` class (selecting the look), and the
+- `applyIndicators()` writes per explorer container: the
+  `folder-bases-indicator-<style>` class (selecting the look), the
   `has-folder-base` class on each `.nav-folder-title[data-path]` whose path is in
-  the set. The `"none"` style clears both. The style is realized entirely in
-  `styles.css` (no per-element style assignment).
+  the set, and — when **Hide base file** is on — the `folder-bases-hidden` class
+  (CSS `display:none`) on each `.nav-file-title[data-path]` whose path is in
+  `baseFiles`. The `"none"` style clears the indicator classes. The look is
+  realized entirely in `styles.css` (no per-element style assignment).
+- The same rebuild that fills `markedFolders` also fills `baseFiles`, a
+  `Set<string>` of those folders' own base paths, so hiding rides the same scan,
+  `MutationObserver`, and vault/layout listeners — hidden bases stay hidden across
+  collapse/expand/scroll. Only an enabled folder's own base is in the set, so the
+  folder filter is respected.
 - Cleanup is registered with `this.register(...)`: the observer is disconnected
   and the classes stripped on unload.
 

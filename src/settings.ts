@@ -59,6 +59,8 @@ export interface FolderBasesSettings {
 	openLocation: OpenLocation;
 	/** How folders that have a base are marked in the file explorer. */
 	indicatorStyle: IndicatorStyle;
+	/** Hide a folder's own base file from the file explorer for a cleaner look. */
+	hideBaseFile: boolean;
 }
 
 export const DEFAULT_BASE_TEMPLATE = `filters:
@@ -86,6 +88,7 @@ export const DEFAULT_SETTINGS: FolderBasesSettings = {
 	matchSubfolders: true,
 	openLocation: "tab",
 	indicatorStyle: "italic",
+	hideBaseFile: false,
 };
 
 /**
@@ -375,6 +378,20 @@ export class FolderBasesSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.indicatorStyle =
 							value as IndicatorStyle;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Hide base file in explorer")
+			.setDesc(
+				"Hide a folder's own base file (e.g. Books/Books.base) from the file explorer, for a cleaner folder-note look. Clicking the folder still opens it. Respects the folder filter.",
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.hideBaseFile)
+					.onChange(async (value) => {
+						this.plugin.settings.hideBaseFile = value;
 						await this.plugin.saveSettings();
 					}),
 			);

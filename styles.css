@@ -52,6 +52,12 @@
 	mask: var(--folder-bases-grid-icon) center / contain no-repeat;
 }
 
+/* Hide a folder's own base file in the explorer (the "Hide base file" setting).
+   The class is toggled per file title in main.ts, so only owned bases match. */
+.nav-file-title.folder-bases-hidden {
+	display: none;
+}
+
 /* Settings: default base content editor. */
 .folder-bases-template-input {
 	width: 100%;

@@ -47,6 +47,7 @@ The filename is configurable (see Settings).
 | **Toggle folder when opening** | When a plain click opens a base, also expand/collapse the folder as usual. Off by default (folder stays put). |
 | **Open base in** | Where a base opens: *Current tab* (default), *New tab*, *Split right*, or *Reuse existing tab* (focuses an already-open tab if there is one). Applies to clicks, commands, and the right-click menu. Middle-clicking a folder always opens in a new tab. |
 | **Folder base indicator** | How folders that have a base are marked in the file explorer: *None*, *Italic* (default), *Bold*, *Accent color*, *Dot*, or *Icon*. The mark shows at all times — not just after you click — and respects the folder filter (excluded folders are never marked). |
+| **Hide base file in explorer** | Off by default. When on, a folder's own base file (e.g. `Books/Books.base`) is hidden from the file explorer for a cleaner folder-note look. Clicking the folder still opens it. Respects the folder filter (only enabled folders' bases are hidden). |
 | **New base content from** | Where a newly created base gets its content: *Inline content* (the YAML in **Default base content**, the default) or *Template file* (a `.base` file in your vault). |
 | **Template file** | Vault-relative path to the `.base` template (shown when the source is *Template file*). Tokens `{{folder_name}}`, `{{folder_path}}` are still substituted; if the file is missing, the inline content is used instead. |
 | **Default base content** | YAML written into newly created `.base` files (shown when the source is *Inline content*). Tokens: `{{folder_name}}`, `{{folder_path}}`. |
@@ -138,3 +139,6 @@ target the folder you'd expect.
    default) without clicking it. Collapse and expand its parent — the mark
    persists. Try other **Folder base indicator** styles, then delete the base and
    confirm the mark disappears.
+7. **Hide base file**: turn on **Hide base file in explorer** and confirm
+   `Projects/Projects.base` disappears from the explorer while the `Projects`
+   folder still opens it on click. Turn it off and the file reappears.

@@ -51,6 +51,9 @@ const FILE_EXPLORER_VIEW_TYPE = "file-explorer";
 /** Class added to folder titles that have an associated base. */
 const HAS_BASE_CLASS = "has-folder-base";
 
+/** Class added to a file title to hide it (a folder's own base file). */
+const HIDDEN_BASE_CLASS = "folder-bases-hidden";
+
 /** Per-explorer class selecting the indicator style (suffixed with the style). */
 const INDICATOR_CLASS_PREFIX = "folder-bases-indicator-";
 
@@ -64,6 +67,8 @@ export default class FolderBasesPlugin extends Plugin {
 
 	/** Folder paths that should be marked (enabled folder whose base exists). */
 	private markedFolders = new Set<string>();
+	/** Base file paths owned by an enabled folder (its own base), for hiding. */
+	private baseFiles = new Set<string>();
 	/** Watches the explorer DOM so indicators survive collapse/expand/scroll. */
 	private explorerObserver: MutationObserver | null = null;
 	/** Rebuild the set, then re-mark (vault changed). */
@@ -262,6 +267,9 @@ export default class FolderBasesPlugin extends Plugin {
 			for (const titleEl of this.folderTitlesIn(container)) {
 				titleEl.removeClass(HAS_BASE_CLASS);
 			}
+			for (const titleEl of this.fileTitlesIn(container)) {
+				titleEl.removeClass(HIDDEN_BASE_CLASS);
+			}
 		}
 	}
 
@@ -281,22 +289,37 @@ export default class FolderBasesPlugin extends Plugin {
 		);
 	}
 
-	/** Recompute which folders should be marked (enabled + their base exists). */
+	/** The file-title elements (with a `data-path`) inside a container. */
+	private fileTitlesIn(container: HTMLElement): HTMLElement[] {
+		return Array.from(
+			container.querySelectorAll<HTMLElement>(".nav-file-title[data-path]"),
+		);
+	}
+
+	/**
+	 * Recompute the base-tracking sets from the vault: `markedFolders` (enabled
+	 * folders whose base exists) and `baseFiles` (those bases' own file paths,
+	 * used to hide them in the explorer).
+	 */
 	private rebuildMarkedFolders(): void {
 		this.markedFolders.clear();
+		this.baseFiles.clear();
 		for (const file of this.app.vault.getAllLoadedFiles()) {
 			if (!(file instanceof TFolder)) continue;
 			if (!isFolderEnabled(file.path, this.settings)) continue;
-			const base = this.app.vault.getAbstractFileByPath(
-				this.basePathForFolder(file),
-			);
-			if (base instanceof TFile) this.markedFolders.add(file.path);
+			const basePath = this.basePathForFolder(file);
+			const base = this.app.vault.getAbstractFileByPath(basePath);
+			if (base instanceof TFile) {
+				this.markedFolders.add(file.path);
+				this.baseFiles.add(basePath);
+			}
 		}
 	}
 
-	/** Reflect the current set + chosen style onto the explorer DOM. */
+	/** Reflect the current sets + chosen style onto the explorer DOM. */
 	private applyIndicators(): void {
 		const style = this.settings.indicatorStyle;
+		const hide = this.settings.hideBaseFile;
 		for (const container of this.explorerContainers()) {
 			container.removeClasses(INDICATOR_CLASSES);
 			if (style !== "none") {
@@ -309,6 +332,12 @@ export default class FolderBasesPlugin extends Plugin {
 					path !== null &&
 					this.markedFolders.has(path);
 				titleEl.toggleClass(HAS_BASE_CLASS, marked);
+			}
+			for (const titleEl of this.fileTitlesIn(container)) {
+				const path = titleEl.getAttribute("data-path");
+				const hidden =
+					hide && path !== null && this.baseFiles.has(path);
+				titleEl.toggleClass(HIDDEN_BASE_CLASS, hidden);
 			}
 		}
 	}

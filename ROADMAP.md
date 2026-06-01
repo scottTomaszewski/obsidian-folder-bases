@@ -23,12 +23,19 @@ events, marking `.nav-folder-title[data-path=...]`.
   (none / italic / bold / accent / dot / icon), applied as a CSS class on the
   explorer container. See `installIndicators` / `applyIndicators` in `src/main.ts`.
 
-### 2. Hide the base file in the explorer 🔲
+### 2. Hide the base file in the explorer ✅
 Optional toggle to hide a folder's own base file (e.g. `Books/Books.base`) from
 the file explorer, like Folder Notes hides the folder note. CSS `display:none` on
 the matching `.nav-file-title`.
 - **Why:** a clean explorer is core to the folder-note UX.
 - **Effort:** S–M · **Touches:** `main.ts`, `styles.css`, `settings.ts`
+- **Shipped:** a **Hide base file in explorer** setting (off by default). The
+  indicator scan now also collects each enabled folder's own base path into a
+  `baseFiles` set; `applyIndicators` toggles a `folder-bases-hidden` class on the
+  matching `.nav-file-title[data-path]` (CSS `display:none`), riding the same
+  `MutationObserver` so hidden bases stay hidden across collapse/expand/scroll.
+  Only an enabled folder's own base is hidden (respects the folder filter). See
+  `applyIndicators` in `src/main.ts`.
 
 ### 3. Keep the base in sync on folder rename/move 🔲
 On folder rename, the base filename (`OldName.base`) and its
@@ -111,6 +118,9 @@ base"), for when the base lives elsewhere or has a custom name.
 - **Why:** flexibility for users who don't want the same-name convention everywhere.
 - **Effort:** M–L · **Touches:** `main.ts`, `settings.ts`, persisted data
 
+### 11. Better auto-moc base
+The default base should serve as an automated MOC. Namely, it should display nested content adn nested Folder Bases in a usefule way
+
 ## Suggested sequencing
 
 1. **Quick, high-impact:** #1, #2, #4, #6 — most change the day-to-day feel; mostly small.
@@ -137,6 +147,7 @@ base"), for when the base lives elsewhere or has a custom name.
 
 - ✅ Persistent indicator on folders that have a base, with a configurable style
   (none / italic / bold / accent / dot / icon) (#1).
+- ✅ Hide a folder's own base file in the file explorer, via an optional toggle (#2).
 - ✅ Click a folder to open its base (plain or modifier + click, configurable).
 - ✅ Configurable filename template (`{{folder_name}}` / `{{folder_path}}`).
 - ✅ Auto-create a base from a template on modifier + click.
