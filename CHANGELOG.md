@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Unreleased changes accumulate under **Unreleased**; cutting a release
 (`devbox run release <version>`) renames that section to the new version header.
 
-## Unreleased
+## 1.6.0
 
 ### Added
 - **Hide base file in explorer**: a new **Hide base file in explorer** toggle
