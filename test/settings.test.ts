@@ -46,6 +46,12 @@ describe("renderTemplate", () => {
 		const yaml = renderTemplate(DEFAULT_BASE_TEMPLATE, "Books", "a/Books");
 		expect(yaml).toContain('file.inFolder("a/Books")');
 		expect(yaml).toContain('file.ext == "md"');
+		// Grouped by subfolder so the default base reads as an MOC.
+		expect(yaml).toContain("file.folder");
+		// Ships table, cards, and list views by default.
+		expect(yaml).toContain("type: table");
+		expect(yaml).toContain("type: cards");
+		expect(yaml).toContain("type: list");
 		// No leftover tokens.
 		expect(yaml).not.toContain("{{");
 	});

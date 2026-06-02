@@ -6,12 +6,14 @@
   "autoCreateOnNewFolder": false,
   "autoCreateMinNotes": 0,
   "collapseOnOpen": false,
-  "templateSource": "file",
+  "templateSource": "inline",
   "templateFile": "default-folder-base.base",
-  "defaultBaseTemplate": "  filters:\n    and:\n      - file.inFolder(\"{{folder_path}}\")\n      - file.ext == \"md\"\n  views:\n    - type: table\n      name: Table\n",
   "folderFilterMode": "all",
   "folderPatterns": "",
   "matchSubfolders": true,
   "openLocation": "tab",
-  "indicatorStyle": "icon"
+  "indicatorStyle": "icon",
+  "hideBaseFile": false,
+  "indicatorColor": "",
+  "indicatorIcon": "layout-grid"
 }

@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Unreleased changes accumulate under **Unreleased**; cutting a release
 (`devbox run release <version>`) renames that section to the new version header.
 
+## Unreleased
+
+### Changed
+- **Default base is now an auto-MOC**: newly created bases group their notes by
+  subfolder (`groupBy: file.folder`) instead of showing one flat table. Combined
+  with `file.inFolder` being recursive, a folder's base now reads as a map of its
+  nested content — each subfolder becomes its own group (#11).
+- **Three default views**: new bases now ship a **List**, **Table**, and **Cards**
+  view (all grouped by subfolder), so you can switch how a folder's contents are
+  presented without editing the base. The list view is listed first, so it's the
+  one shown when the base opens (#11).
+
 ## 1.7.0
 
 ### Added

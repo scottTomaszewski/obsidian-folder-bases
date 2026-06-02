@@ -35,6 +35,11 @@ Projects/
 
 The filename is configurable (see Settings).
 
+A newly created base acts as an automated **MOC** for the folder: it lists the
+folder's notes — including those in subfolders, since the match is recursive —
+grouped by subfolder, so the base reads as a map of the folder's nested content
+rather than one flat table.
+
 ## Settings
 
 | Setting | What it does |

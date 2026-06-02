@@ -118,11 +118,19 @@ base"), for when the base lives elsewhere or has a custom name.
 - **Why:** flexibility for users who don't want the same-name convention everywhere.
 - **Effort:** M–L · **Touches:** `main.ts`, `settings.ts`, persisted data
 
-### 11. Better auto-MOC base 🔲
+### 11. Better auto-MOC base ✅
 The default base should serve as an automated MOC. Namely, it should display nested
 content and nested Folder Bases in a useful way.
 - **Why:** turns every folder base into a navigable map of content, not just a flat table.
 - **Effort:** M · **Touches:** `settings.ts` (default template), `main.ts`
+- **Shipped:** the default template's table now carries `groupBy: file.folder`.
+  Because `file.inFolder(...)` is recursive, nested notes were already matched —
+  grouping by the immediate subfolder turns that flat list into a map of the
+  folder's nested content (each subfolder its own group). No `main.ts` change was
+  needed (no new token). Listing nested folder *bases* as in-table drill-down
+  links was deferred to keep the default simple (see Backlog); nested bases stay
+  reachable by clicking the subfolder. See `DEFAULT_BASE_TEMPLATE` in
+  `src/settings.ts`.
 
 ## Suggested sequencing
 
@@ -135,6 +143,9 @@ content and nested Folder Bases in a useful way.
 
 ## Backlog / nice-to-have
 
+- List nested folder bases as clickable drill-down links inside the parent base
+  (a second view filtered to subfolder `.base` files) — the deferred half of #11,
+  so an MOC can navigate *into* sub-MOCs, not just list nested notes.
 - Notebook Navigator explorer support for the active-folder commands (its view
   isn't `file-explorer`, so `resolveActiveFolder` currently ignores its
   selection and falls back to the active note's folder).
@@ -167,4 +178,6 @@ content and nested Folder Bases in a useful way.
   threshold to avoid noise (#7).
 - ✅ Graceful one-time `Notice` when the core Bases plugin is disabled, instead of
   opening a base that won't render (#9).
+- ✅ Auto-MOC default base: notes (recursive, incl. subfolders) grouped by
+  subfolder via `groupBy: file.folder` (#11).
 - ✅ Vitest unit-test harness covering the pure settings logic (`test/`, `devbox run test`).

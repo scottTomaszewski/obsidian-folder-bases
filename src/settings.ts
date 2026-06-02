@@ -85,8 +85,29 @@ export const DEFAULT_BASE_TEMPLATE = `filters:
     - file.inFolder("{{folder_path}}")
     - file.ext == "md"
 views:
+  - type: list
+    name: List
+    groupBy:
+      property: file.folder
+      direction: ASC
+    order:
+      - file.name
   - type: table
     name: Table
+    groupBy:
+      property: file.folder
+      direction: ASC
+    order:
+      - file.name
+      - file.mtime
+  - type: cards
+    name: Cards
+    groupBy:
+      property: file.folder
+      direction: ASC
+    order:
+      - file.name
+      - file.mtime
 `;
 
 export const DEFAULT_SETTINGS: FolderBasesSettings = {
