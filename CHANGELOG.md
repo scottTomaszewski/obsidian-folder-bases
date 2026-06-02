@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Unreleased changes accumulate under **Unreleased**; cutting a release
 (`devbox run release <version>`) renames that section to the new version header.
 
+## Unreleased
+
+### Changed
+- **Narrower vault access**: folder indicators are now rebuilt by iterating only
+  the vault's folders (`vault.getAllFolders`) instead of enumerating every file
+  in the vault, so the plugin no longer touches file-level paths it doesn't need.
+
 ## 1.8.0
 
 ### Changed

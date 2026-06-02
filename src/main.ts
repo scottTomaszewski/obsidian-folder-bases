@@ -311,13 +311,12 @@ export default class FolderBasesPlugin extends Plugin {
 	private rebuildMarkedFolders(): void {
 		this.markedFolders.clear();
 		this.baseFiles.clear();
-		for (const file of this.app.vault.getAllLoadedFiles()) {
-			if (!(file instanceof TFolder)) continue;
-			if (!isFolderEnabled(file.path, this.settings)) continue;
-			const basePath = this.basePathForFolder(file);
+		for (const folder of this.app.vault.getAllFolders(true)) {
+			if (!isFolderEnabled(folder.path, this.settings)) continue;
+			const basePath = this.basePathForFolder(folder);
 			const base = this.app.vault.getAbstractFileByPath(basePath);
 			if (base instanceof TFile) {
-				this.markedFolders.add(file.path);
+				this.markedFolders.add(folder.path);
 				this.baseFiles.add(basePath);
 			}
 		}
